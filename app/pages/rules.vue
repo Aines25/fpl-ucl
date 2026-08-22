@@ -9,7 +9,7 @@ import { matchdays } from '../../data/matchdays'
     <section class="space-y-3">
       <h3 class="font-display text-white uppercase tracking-display">Group stage</h3>
       <p>
-        Eight groups of four. Each manager plays the other three twice across six FPL Gameweeks.
+        Eight groups of four. Each team plays each other twice across six FPL Gameweeks.
         A higher Gameweek net score wins the fixture: 3 points for a win, 1 for a draw, 0 for a loss.
         Tables use FPL points for (PF), points against (PA) and difference, not football goals.
       </p>
@@ -18,10 +18,7 @@ import { matchdays } from '../../data/matchdays'
     <section class="space-y-3">
       <h3 class="font-display text-white uppercase tracking-display">FPL scoring</h3>
       <p>
-        Official Fantasy Premier League Gameweek scores are the source of truth. This site never
-        recalculates player points itself. Transfer hits are taken from FPL’s
-        <code class="text-white">event_transfers_cost</code> and subtracted once from the gross
-        Gameweek <code class="text-white">points</code> total. Hits are never deducted twice.
+        Official Fantasy Premier League Gameweek scores are the source of truth. Transfer hits are taken from FPL and subtracted from the Gameweek points total.
       </p>
     </section>
 
@@ -44,7 +41,7 @@ import { matchdays } from '../../data/matchdays'
         <li>Head-to-head PF difference among the tied managers</li>
         <li>Overall PF difference</li>
         <li>Overall PF</li>
-        <li>Alphabetical name (deterministic fallback — never a random coin toss)</li>
+        <li>Alphabetical name</li>
       </ol>
     </section>
 
@@ -53,8 +50,7 @@ import { matchdays } from '../../data/matchdays'
       <p>
         Group winners and runners-up qualify. Round of 16 is a constrained draw: winners versus
         runners-up, no pairing from the same original group. Quarter-finals and semi-finals are
-        open draws. Those draws are generated once, saved as config, and committed. The site never
-        re-rolls them on refresh.
+        open draws.
       </p>
       <p>
         Round of 16, quarter-finals and semi-finals are two FPL Gameweeks, decided on aggregate.
@@ -69,7 +65,6 @@ import { matchdays } from '../../data/matchdays'
         <li>Most goals scored by the manager’s FPL team across the tie (when available)</li>
         <li>Fewest goals conceded across the tie (when available)</li>
         <li>Highest single-leg FPL score</li>
-        <li>Deterministic coin toss from the tie id — the same refresh always produces the same winner</li>
       </ol>
     </section>
 
