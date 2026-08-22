@@ -29,7 +29,7 @@ const awayWins = computed(() => props.result?.winnerId === props.fixture.awayId)
         </div>
         <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
           <div class="min-w-0 text-left">
-            <p class="truncate font-display text-sm tracking-wide text-white uppercase">
+            <p class="truncate font-display text-[12px] tracking-wide text-white uppercase sm:text-sm">
               {{ home.name }}
             </p>
           </div>
@@ -39,7 +39,7 @@ const awayWins = computed(() => props.result?.winnerId === props.fixture.awayId)
             <ScoreDisplay :value="result?.awayScore ?? null" :winner="awayWins" />
           </div>
           <div class="min-w-0 text-right">
-            <p class="truncate font-display text-sm tracking-wide text-white uppercase">
+            <p class="truncate font-display text-[12px] tracking-wide text-white uppercase sm:text-sm">
               {{ away.name }}
             </p>
           </div>

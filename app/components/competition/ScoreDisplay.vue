@@ -13,7 +13,7 @@ withDefaults(defineProps<{
   <span
     :class="[
       'font-stats leading-none tabular-nums',
-      size === 'lg' ? 'text-score' : 'text-3xl',
+      size === 'lg' ? 'text-score' : 'text-[16px] sm:text-3xl',
       winner ? 'text-star' : 'text-white',
     ]"
   >
