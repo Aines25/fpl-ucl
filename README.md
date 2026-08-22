@@ -40,7 +40,7 @@ npx tsx scripts/draw-knockout.ts sf --ids 1,7,13,19
 
 Paste the printed fixtures/ties into [`data/knockout.ts`](data/knockout.ts) and commit.
 
-## Deploy to christiancodes.co.uk
+## Deploy
 
 The app is a standard Nuxt 4 / Nitro server. It needs SSR (FPL calls are server-side). Pick the host that currently serves the domain and set the matching preset if it is not auto-detected:
 
