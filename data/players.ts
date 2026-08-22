@@ -41,10 +41,10 @@ const linkedPlayers: CompetitionPlayer[] = [
   { id: 26, name: 'Josh Williams', fplId: 278195, group: 'G' },
   { id: 27, name: 'Richard Carr', fplId: 1987263, group: 'G' },
   { id: 28, name: 'Sam Woodcock', fplId: 86054, group: 'G' },
-  { id: 29, name: 'Lee Hicks', fplId: 2412253, group: 'H' },
-  { id: 30, name: 'Justin Maynard', fplId: 4191804, group: 'H' },
-  { id: 31, name: 'Luke Mcmanus', fplId: 505660, group: 'H' },
-  { id: 32, name: 'Gbenga Sonuga', fplId: 328296, group: 'H' },
+  { id: 29, name: 'Justin Maynard', fplId: 4191804, group: 'H' },
+  { id: 30, name: 'Luke Mcmanus', fplId: 505660, group: 'H' },
+  { id: 31, name: 'Lee Hicks', fplId: 2412253, group: 'H' },
+  { id: 32, name: 'Gbenga Ladega', fplId: 2737591, group: 'H' },
 
 ]
 
