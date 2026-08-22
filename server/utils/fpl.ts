@@ -8,11 +8,24 @@ const headers = {
 }
 
 export interface FplPicksResponse {
+  active_chip?: string | null
   entry_history?: {
     points?: number
+    event_transfers?: number
     event_transfers_cost?: number
     total_points?: number
+    rank?: number | null
+    overall_rank?: number | null
+    value?: number
+    bank?: number
   }
+  picks?: Array<{
+    element: number
+    position: number
+    multiplier: number
+    is_captain: boolean
+    is_vice_captain: boolean
+  }>
 }
 
 export interface FplBootstrapResponse {
@@ -24,6 +37,29 @@ export interface FplBootstrapResponse {
     finished: boolean
     data_checked: boolean
     deadline_time: string | null
+  }>
+  elements?: Array<{
+    id: number
+    web_name: string
+    team: number
+    element_type: number
+    code: number
+  }>
+  teams?: Array<{
+    id: number
+    name: string
+    short_name: string
+    code: number
+  }>
+}
+
+export interface FplLiveResponse {
+  elements?: Array<{
+    id: number
+    stats?: {
+      minutes?: number
+      total_points?: number
+    }
   }>
 }
 

@@ -49,13 +49,23 @@ function signed(value: number) {
           v-for="row in rows"
           :key="row.playerId"
           :class="[
-            'border-cyan/10',
+            'cursor-pointer border-cyan/10',
             row.qualifyingZone ? 'bg-star/8' : '',
             row.eliminated ? 'opacity-50' : '',
           ]"
+          @click="navigateTo(`/team/${row.playerId}`)"
         >
           <TableCell class="text-silver">{{ row.position }}</TableCell>
-          <TableCell class="font-medium text-white">{{ getPlayer(row.playerId).name }}</TableCell>
+          <TableCell class="font-medium text-white">
+            <NuxtLink
+              :to="`/team/${row.playerId}`"
+              :prefetch="false"
+              class="hover:text-cyan"
+              @click.stop
+            >
+              {{ getPlayer(row.playerId).name }}
+            </NuxtLink>
+          </TableCell>
           <TableCell class="text-right text-white">{{ row.played }}</TableCell>
           <TableCell class="hidden text-right text-white sm:table-cell">{{ row.won }}</TableCell>
           <TableCell class="hidden text-right text-white sm:table-cell">{{ row.drawn }}</TableCell>

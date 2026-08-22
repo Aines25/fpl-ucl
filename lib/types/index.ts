@@ -12,3 +12,11 @@ export type {
   Stage,
   TournamentFixture,
 } from './competition'
+
+export type {
+  CataloguePlayer,
+  ElementType,
+  FplSquadView,
+  LivePlayerStats,
+  SquadSlot,
+} from './squad'
