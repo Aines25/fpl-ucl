@@ -53,6 +53,8 @@ The app is a standard Nuxt 4 / Nitro server. It needs SSR (FPL calls are server-
 
 Point `website` (and the apex if you use it) at that deployment.
 
+Live snapshots are cached for 60 seconds while a gameweek is in play (12 hours once FPL has checked the data). On Cloudflare Workers the cache is shared via the Cache API, so a WhatsApp group opening the site at once does not each trigger a full FPL burst. No KV namespace is required.
+
 ## Stack
 
 Nuxt 4, Vue 3, TypeScript, Tailwind CSS, ShadCN Vue, Nitro server routes. Design tokens live in [`app/assets/css/tokens.css`](app/assets/css/tokens.css). UEFA Champions League colours/type are **inspired** public substitutes (Cinzel, Barlow Condensed, Inter) — official UEFA marks and the Champions typeface are not embedded.

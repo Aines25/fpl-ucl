@@ -14,17 +14,26 @@ export function eventStatus(event: FplEventState | undefined): FixtureStatus {
   return 'scheduled'
 }
 
+function scoreHasStarted(score: FplGameweekScore | undefined) {
+  return Boolean(score?.available && (score.points !== 0 || score.transferCost !== 0))
+}
+
 export function determineFixtureResult(
   fixture: TournamentFixture,
   home: FplGameweekScore | undefined,
   away: FplGameweekScore | undefined,
   event: FplEventState | undefined,
 ): FixtureResult {
-  const status = eventStatus(event)
+  let status = eventStatus(event)
   const homeReady = Boolean(home?.available)
   const awayReady = Boolean(away?.available)
 
-  if (!homeReady || !awayReady || status === 'scheduled') {
+  // Bootstrap can fail while picks succeed. Points mean the gameweek has started.
+  if (status === 'scheduled' && (scoreHasStarted(home) || scoreHasStarted(away))) {
+    status = 'live'
+  }
+
+  if (status === 'scheduled') {
     return {
       fixtureId: fixture.id,
       homeScore: homeReady ? home!.netPoints : null,
@@ -32,7 +41,19 @@ export function determineFixtureResult(
       winnerId: null,
       loserId: null,
       draw: false,
-      status: homeReady && awayReady && status !== 'scheduled' ? status : 'scheduled',
+      status: 'scheduled',
+    }
+  }
+
+  if (!homeReady || !awayReady) {
+    return {
+      fixtureId: fixture.id,
+      homeScore: homeReady ? home!.netPoints : null,
+      awayScore: awayReady ? away!.netPoints : null,
+      winnerId: null,
+      loserId: null,
+      draw: false,
+      status,
     }
   }
 

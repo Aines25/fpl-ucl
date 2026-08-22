@@ -70,15 +70,51 @@ export interface FplManagerResponse {
   player_last_name?: string
 }
 
-export async function fplFetch<T>(path: string): Promise<T> {
-  const response = await fetch(`${FPL_BASE}${path}`, { headers })
-  if (!response.ok) {
-    throw createError({
-      statusCode: response.status,
-      statusMessage: `FPL API ${path} failed with ${response.status}`,
-    })
+export function isRetryableStatus(status: number) {
+  return status === 403 || status === 408 || status === 425 || status === 429 || status >= 500
+}
+
+export function retryDelayMs(attempt: number, status?: number) {
+  const base = status === 429 ? 400 : 200
+  return base * 2 ** attempt
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export async function fplFetch<T>(path: string, attempts = 2): Promise<T> {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch(`${FPL_BASE}${path}`, { headers })
+      if (response.ok) {
+        return response.json() as Promise<T>
+      }
+
+      const error = createError({
+        statusCode: response.status,
+        statusMessage: `FPL API ${path} failed with ${response.status}`,
+      })
+      if (!isRetryableStatus(response.status) || attempt === attempts - 1) {
+        throw error
+      }
+      lastError = error
+      await wait(retryDelayMs(attempt, response.status))
+    }
+    catch (error) {
+      lastError = error
+      const status = typeof error === 'object' && error && 'statusCode' in error
+        ? Number((error as { statusCode?: number }).statusCode)
+        : 0
+      if (status && !isRetryableStatus(status)) throw error
+      if (attempt === attempts - 1) throw error
+      await wait(retryDelayMs(attempt, status || undefined))
+    }
   }
-  return response.json() as Promise<T>
+
+  throw lastError
 }
 
 export function normaliseEvent(event: NonNullable<FplBootstrapResponse['events']>[number]): FplEventState {

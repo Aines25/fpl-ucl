@@ -49,7 +49,11 @@ export default defineNuxtConfig({
     routeRules: {
       '/api/fpl/**': {
         cors: false,
-        headers: { 'cache-control': 's-maxage=60' },
+        headers: { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=600' },
+      },
+      '/api/competition/**': {
+        cors: false,
+        headers: { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=600' },
       },
     },
   },

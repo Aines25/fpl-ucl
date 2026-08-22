@@ -1,5 +1,11 @@
 import { players } from '../../data/players'
 import {
+  isFresh,
+  readSharedCache,
+  writeSharedCache,
+  type Timed,
+} from './cache'
+import {
   cacheMaxAge,
   fplFetch,
   normaliseEvent,
@@ -10,13 +16,55 @@ import {
 } from './fpl'
 import type { FplEventState, FplGameweekScore } from '../../lib/types/competition'
 
+const BOOTSTRAP_TTL_MS = 60_000
+const SCORE_TTL_MS = 60_000
+
+type BootstrapPayload = {
+  events: FplEventState[]
+  current: FplEventState | undefined
+}
+
+let bootstrapMemory: Timed<BootstrapPayload> | null = null
+const scoreMemory = new Map<string, Timed<FplGameweekScore>>()
+
+function scoreKey(managerId: number, gameweek: number) {
+  return `${managerId}:${gameweek}`
+}
+
+function rememberScore(score: FplGameweekScore) {
+  if (!score.available) return
+  scoreMemory.set(scoreKey(score.managerId, score.gameweek), { at: Date.now(), data: score })
+}
+
+function recalledScore(managerId: number, gameweek: number) {
+  return scoreMemory.get(scoreKey(managerId, gameweek))?.data
+}
+
 export async function getBootstrap() {
-  const payload = await fplFetch<FplBootstrapResponse>('/bootstrap-static/')
-  const events = (payload.events ?? []).map(normaliseEvent)
-  const current = events.find((event) => event.isCurrent) ?? events.find((event) => !event.finished)
-  return {
-    events,
-    current,
+  if (isFresh(bootstrapMemory, BOOTSTRAP_TTL_MS) && bootstrapMemory) {
+    return bootstrapMemory.data
+  }
+
+  if (!bootstrapMemory) {
+    const shared = await readSharedCache<BootstrapPayload>('fpl:bootstrap')
+    if (shared) {
+      bootstrapMemory = shared
+      if (isFresh(shared, BOOTSTRAP_TTL_MS)) return shared.data
+    }
+  }
+
+  try {
+    const payload = await fplFetch<FplBootstrapResponse>('/bootstrap-static/')
+    const events = (payload.events ?? []).map(normaliseEvent)
+    const current = events.find((event) => event.isCurrent) ?? events.find((event) => !event.finished)
+    const data = { events, current }
+    bootstrapMemory = { at: Date.now(), data }
+    void writeSharedCache('fpl:bootstrap', data, cacheMaxAge(current))
+    return data
+  }
+  catch (error) {
+    if (bootstrapMemory) return bootstrapMemory.data
+    throw error
   }
 }
 
@@ -41,12 +89,19 @@ export async function getGameweekScore(
     }
   }
 
+  const cached = scoreMemory.get(scoreKey(managerId, gameweek))
+  if (isFresh(cached, SCORE_TTL_MS) && cached) {
+    return cached.data
+  }
+
   try {
     const payload = await fplFetch<FplPicksResponse>(`/entry/${fplId}/event/${gameweek}/picks/`)
-    return normaliseGameweekScore(managerId, fplId, gameweek, payload)
+    const score = normaliseGameweekScore(managerId, fplId, gameweek, payload)
+    rememberScore(score)
+    return score
   }
   catch {
-    return {
+    return recalledScore(managerId, gameweek) ?? {
       managerId,
       fplId,
       gameweek,
@@ -73,18 +128,18 @@ async function mapPool<T, R>(items: T[], concurrency: number, mapper: (item: T) 
 }
 
 export async function getScoresForGameweek(gameweek: number) {
-  return mapPool(players, 8, (player) => getGameweekScore(player.id, player.fplId, gameweek))
+  return mapPool(players, 4, (player) => getGameweekScore(player.id, player.fplId, gameweek))
 }
 
 export async function getScoresForGameweeks(gameweeks: number[]) {
   const unique = [...new Set(gameweeks)]
-  const nested = await mapPool(unique, 2, (gameweek) => getScoresForGameweek(gameweek))
+  const nested = await mapPool(unique, 1, (gameweek) => getScoresForGameweek(gameweek))
   return nested.flat()
 }
 
 export function maxAgeForEvents(events: FplEventState[], gameweeks: number[]) {
   const relevant = events.filter((event) => gameweeks.includes(event.id))
   if (relevant.some((event) => event.isCurrent && !event.dataChecked)) return 60
-  if (relevant.every((event) => event.dataChecked)) return cacheMaxAge(relevant[0])
+  if (relevant.length && relevant.every((event) => event.dataChecked)) return cacheMaxAge(relevant[0])
   return 120
 }

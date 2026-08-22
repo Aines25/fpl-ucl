@@ -67,4 +67,26 @@ describe('determineFixtureResult', () => {
     expect(result.winnerId).toBeNull()
     expect(result.status).toBe('provisional')
   })
+
+  it('stays scheduled when both sides have 0 before the gameweek starts', () => {
+    const result = determineFixtureResult(fixture, score(1, 0), score(2, 0), undefined)
+    expect(result.status).toBe('scheduled')
+    expect(result.winnerId).toBeNull()
+  })
+
+  it('treats scored fixtures as live when event metadata is missing', () => {
+    const result = determineFixtureResult(fixture, score(1, 15), score(2, 15), undefined)
+    expect(result.status).toBe('live')
+    expect(result.homeScore).toBe(15)
+    expect(result.awayScore).toBe(15)
+    expect(result.draw).toBe(true)
+  })
+
+  it('keeps a live status if one side failed to load', () => {
+    const result = determineFixtureResult(fixture, score(1, 20), undefined, event())
+    expect(result.status).toBe('live')
+    expect(result.homeScore).toBe(20)
+    expect(result.awayScore).toBeNull()
+    expect(result.winnerId).toBeNull()
+  })
 })

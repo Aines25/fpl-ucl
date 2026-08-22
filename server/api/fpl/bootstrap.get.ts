@@ -3,6 +3,7 @@ export default cachedEventHandler(
   {
     maxAge: 60,
     swr: true,
+    staleMaxAge: 60 * 60,
     getKey: () => 'fpl:bootstrap',
   },
 )
