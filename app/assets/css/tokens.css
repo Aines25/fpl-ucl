@@ -1,0 +1,152 @@
+:root {
+  /* Colour — UEFA-inspired midnight stage + Kick of Light prism */
+  --ucl-navy-950: #050b1a;
+  --ucl-navy-900: #0a1633;
+  --ucl-navy-800: #0e1c4a;
+  --ucl-navy-700: #132b6b;
+  --ucl-navy-600: #1a3a8a;
+  --ucl-cyan: #00a3e0;
+  --ucl-cyan-dim: color-mix(in srgb, var(--ucl-cyan) 18%, transparent);
+  --ucl-silver: #c8d0dc;
+  --ucl-silver-dim: #8b95a8;
+  --ucl-white: #f4f7fb;
+  --ucl-star: #f5c542;
+  --ucl-star-dim: color-mix(in srgb, var(--ucl-star) 18%, transparent);
+
+  /* Prism accents — Groups A–H */
+  --ucl-group-a: #00a3e0;
+  --ucl-group-b: #2ee6c7;
+  --ucl-group-c: #7b6cff;
+  --ucl-group-d: #e85cff;
+  --ucl-group-e: #f5c542;
+  --ucl-group-f: #ff6b4a;
+  --ucl-group-g: #4ad6ff;
+  --ucl-group-h: #c4f25a;
+
+  /* Semantic fixture status */
+  --ucl-live: #ff4d6a;
+  --ucl-provisional: #f5c542;
+  --ucl-final: #2ee6c7;
+  --ucl-qualify: #f5c542;
+  --ucl-eliminated: #5a6578;
+
+  /* Typography */
+  --ucl-font-display: 'Cinzel', ui-serif, Georgia, serif;
+  --ucl-font-stats: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
+  --ucl-font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --ucl-text-kicker: 0.6875rem;
+  --ucl-text-label: 0.75rem;
+  --ucl-text-body: 0.9375rem;
+  --ucl-text-title: 1.5rem;
+  --ucl-text-display: 2rem;
+  --ucl-text-score: 2.5rem;
+  --ucl-tracking-display: 0.18em;
+  --ucl-tracking-kicker: 0.22em;
+
+  /* Surface */
+  --ucl-radius-sm: 0.125rem;
+  --ucl-radius-md: 0.25rem;
+  --ucl-radius-lg: 0.375rem;
+  --ucl-shadow-card: 0 12px 40px rgb(0 0 0 / 0.35);
+  --ucl-inset-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --ucl-backdrop-opacity: 0.08;
+
+  --ucl-space-1: 0.25rem;
+  --ucl-space-2: 0.5rem;
+  --ucl-space-3: 0.75rem;
+  --ucl-space-4: 1rem;
+  --ucl-space-6: 1.5rem;
+  --ucl-space-8: 2rem;
+  --ucl-space-12: 3rem;
+  --ucl-page-max: 72rem;
+  --ucl-nav-height: 4rem;
+  --ucl-header-height: 4.5rem;
+
+  /* ShadCN semantic mapping */
+  --background: var(--ucl-navy-950);
+  --foreground: var(--ucl-white);
+  --card: var(--ucl-navy-800);
+  --card-foreground: var(--ucl-white);
+  --popover: var(--ucl-navy-900);
+  --popover-foreground: var(--ucl-white);
+  --primary: var(--ucl-cyan);
+  --primary-foreground: var(--ucl-navy-950);
+  --secondary: var(--ucl-navy-700);
+  --secondary-foreground: var(--ucl-white);
+  --muted: var(--ucl-navy-900);
+  --muted-foreground: var(--ucl-silver);
+  --accent: var(--ucl-navy-700);
+  --accent-foreground: var(--ucl-white);
+  --destructive: var(--ucl-live);
+  --destructive-foreground: var(--ucl-white);
+  --border: color-mix(in srgb, var(--ucl-cyan) 22%, var(--ucl-navy-700));
+  --input: var(--ucl-navy-700);
+  --ring: var(--ucl-cyan);
+  --radius: var(--ucl-radius-md);
+}
+
+@theme inline {
+  --color-navy-950: var(--ucl-navy-950);
+  --color-navy-900: var(--ucl-navy-900);
+  --color-navy-800: var(--ucl-navy-800);
+  --color-navy-700: var(--ucl-navy-700);
+  --color-navy-600: var(--ucl-navy-600);
+  --color-cyan: var(--ucl-cyan);
+  --color-silver: var(--ucl-silver);
+  --color-silver-dim: var(--ucl-silver-dim);
+  --color-star: var(--ucl-star);
+  --color-live: var(--ucl-live);
+  --color-provisional: var(--ucl-provisional);
+  --color-final: var(--ucl-final);
+  --color-qualify: var(--ucl-qualify);
+  --color-eliminated: var(--ucl-eliminated);
+  --color-group-a: var(--ucl-group-a);
+  --color-group-b: var(--ucl-group-b);
+  --color-group-c: var(--ucl-group-c);
+  --color-group-d: var(--ucl-group-d);
+  --color-group-e: var(--ucl-group-e);
+  --color-group-f: var(--ucl-group-f);
+  --color-group-g: var(--ucl-group-g);
+  --color-group-h: var(--ucl-group-h);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: var(--ucl-font-display);
+  --font-stats: var(--ucl-font-stats);
+  --font-sans: var(--ucl-font-body);
+
+  --text-kicker: var(--ucl-text-kicker);
+  --text-label: var(--ucl-text-label);
+  --text-score: var(--ucl-text-score);
+  --text-display: var(--ucl-text-display);
+
+  --tracking-display: var(--ucl-tracking-display);
+  --tracking-kicker: var(--ucl-tracking-kicker);
+
+  --radius-sm: var(--ucl-radius-sm);
+  --radius-md: var(--ucl-radius-md);
+  --radius-lg: var(--ucl-radius-lg);
+
+  --shadow-card: var(--ucl-shadow-card);
+  --max-width-page: var(--ucl-page-max);
+  --spacing-nav: var(--ucl-nav-height);
+  --spacing-header: var(--ucl-header-height);
+}

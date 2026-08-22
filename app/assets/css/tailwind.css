@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./tokens.css";
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply bg-navy-950 text-foreground font-sans antialiased;
+  }
+
+  body {
+    @apply min-h-dvh bg-navy-950 text-foreground;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-cyan;
+  }
+}
