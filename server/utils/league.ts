@@ -1,18 +1,50 @@
 import { competition } from '../../data/competition'
 import { players } from '../../data/players'
+import type { FplEventState } from '../../lib/types/competition'
 import type { ClassicLeagueTable, LeagueStandingRow } from '../../lib/types/league'
 import { isFresh, readSharedCache, writeSharedCache, type Timed } from './cache'
-import { cacheMaxAge, fplFetch, type FplClassicLeagueResponse } from './fpl'
+import { cacheMaxAge, fplFetch, type FplClassicLeagueResponse, type FplPicksResponse } from './fpl'
 import { getBootstrap } from './scores'
+import { getPlayerCatalogue } from './squad'
 
 const LEAGUE_TTL_MS = 60_000
 const MAX_PAGES = 6
+const CAPTAIN_BATCH = 10
+const CAPTAIN_PERSIST_SECONDS = 60 * 60 * 12
+
+type CaptainPair = Pick<LeagueStandingRow, 'captain' | 'viceCaptain'>
 
 let leagueMemory: Timed<ClassicLeagueTable> | null = null
 let leagueInflight: Promise<ClassicLeagueTable> | null = null
+const captainMemory = new Map<string, CaptainPair>()
+const captainSharedHydrated = new Set<number>()
 
 function playerByFplId() {
   return new Map(players.filter((player) => player.fplId > 0).map((player) => [player.fplId, player.id]))
+}
+
+function captainKey(entryId: number, gameweek: number) {
+  return `${entryId}:${gameweek}`
+}
+
+export function captainsAreLocked(event: FplEventState | undefined, now = Date.now()) {
+  if (!event) return false
+  if (event.finished || event.dataChecked || event.isCurrent) return true
+  if (!event.deadlineTime) return false
+  return now >= new Date(event.deadlineTime).getTime()
+}
+
+export function captainsFromPicks(
+  picks: FplPicksResponse['picks'],
+  names: Map<number, string>,
+): CaptainPair {
+  let captain: string | null = null
+  let viceCaptain: string | null = null
+  for (const pick of picks ?? []) {
+    if (pick.is_captain) captain = names.get(pick.element) ?? null
+    if (pick.is_vice_captain) viceCaptain = names.get(pick.element) ?? null
+  }
+  return { captain, viceCaptain }
 }
 
 export function normaliseLeagueStanding(
@@ -29,7 +61,68 @@ export function normaliseLeagueStanding(
     eventTotal: row.event_total ?? 0,
     total: row.total ?? 0,
     competitionPlayerId: competitionIds.get(entryId) ?? null,
+    captain: null,
+    viceCaptain: null,
   }
+}
+
+async function hydrateCaptainMemory(gameweek: number) {
+  if (captainSharedHydrated.has(gameweek)) return
+  const shared = await readSharedCache<Record<string, CaptainPair>>(`fpl:league-captains:${gameweek}`)
+  if (shared?.data) {
+    for (const [entryId, pair] of Object.entries(shared.data)) {
+      captainMemory.set(captainKey(Number(entryId), gameweek), pair)
+    }
+  }
+  captainSharedHydrated.add(gameweek)
+}
+
+async function persistCaptainMemory(gameweek: number) {
+  const data: Record<string, CaptainPair> = {}
+  const suffix = `:${gameweek}`
+  for (const [key, pair] of captainMemory) {
+    if (!key.endsWith(suffix)) continue
+    data[key.slice(0, -suffix.length)] = pair
+  }
+  await writeSharedCache(`fpl:league-captains:${gameweek}`, data, CAPTAIN_PERSIST_SECONDS)
+}
+
+async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEventState | undefined) {
+  const gameweek = event?.id
+  if (!gameweek) return standings
+
+  await hydrateCaptainMemory(gameweek)
+
+  if (captainsAreLocked(event)) {
+    const missing = standings
+      .map((row) => row.entryId)
+      .filter((entryId) => entryId > 0 && !captainMemory.has(captainKey(entryId, gameweek)))
+
+    if (missing.length) {
+      const catalogue = await getPlayerCatalogue()
+      const names = new Map([...catalogue.values()].map((player) => [player.id, player.webName]))
+      let fetched = 0
+
+      for (let index = 0; index < missing.length; index += CAPTAIN_BATCH) {
+        const batch = missing.slice(index, index + CAPTAIN_BATCH)
+        await Promise.all(batch.map(async (entryId) => {
+          const payload = await fplFetch<FplPicksResponse>(
+            `/entry/${entryId}/event/${gameweek}/picks/`,
+          ).catch(() => null)
+          if (!payload) return
+          captainMemory.set(captainKey(entryId, gameweek), captainsFromPicks(payload.picks, names))
+          fetched += 1
+        }))
+      }
+
+      if (fetched) await persistCaptainMemory(gameweek)
+    }
+  }
+
+  return standings.map((row) => ({
+    ...row,
+    ...(captainMemory.get(captainKey(row.entryId, gameweek)) ?? { captain: null, viceCaptain: null }),
+  }))
 }
 
 async function fetchClassicLeague(leagueId: number): Promise<ClassicLeagueTable> {
@@ -50,10 +143,18 @@ async function fetchClassicLeague(leagueId: number): Promise<ClassicLeagueTable>
     page += 1
   }
 
+  let event: FplEventState | undefined
+  try {
+    event = (await getBootstrap()).current
+  }
+  catch {
+    event = undefined
+  }
+
   return {
     leagueId,
     name,
-    standings,
+    standings: await attachLeagueCaptains(standings, event),
   }
 }
 

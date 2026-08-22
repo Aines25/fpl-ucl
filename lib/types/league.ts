@@ -7,6 +7,8 @@ export interface LeagueStandingRow {
   eventTotal: number
   total: number
   competitionPlayerId: number | null
+  captain: string | null
+  viceCaptain: string | null
 }
 
 export interface ClassicLeagueTable {

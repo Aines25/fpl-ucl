@@ -23,16 +23,16 @@ function isActive(path: string) {
     aria-label="Competition"
   >
     <ul class="mx-auto flex max-w-page items-stretch justify-around px-1 md:justify-start md:gap-1 md:px-6">
-      <li v-for="link in links" :key="link.to" class="flex-1 md:flex-none">
+      <li v-for="link in links" :key="link.to" class="min-w-0 flex-1 md:flex-none">
         <NuxtLink
           :to="link.to"
           :class="[
-            'flex flex-col items-center gap-1 px-1.5 py-2.5 font-stats text-[10px] tracking-kicker uppercase transition-colors sm:text-kicker md:flex-row md:gap-2 md:px-3 md:py-3 md:text-label',
+            'flex flex-col items-center gap-1 px-0.5 py-2.5 font-stats text-[10px] uppercase transition-colors sm:px-1.5 sm:tracking-kicker sm:text-kicker md:flex-row md:gap-2 md:px-3 md:py-3 md:text-label',
             isActive(link.to) ? 'text-cyan' : 'text-silver hover:text-white',
           ]"
         >
-          <component :is="link.icon" class="size-4" />
-          {{ link.label }}
+          <component :is="link.icon" class="size-4 shrink-0" />
+          <span class="max-w-full truncate">{{ link.label }}</span>
         </NuxtLink>
       </li>
     </ul>

@@ -49,6 +49,7 @@ function movement(rank: number, lastRank: number | null) {
             <TableHead class="w-8 text-silver" />
             <TableHead class="text-silver">Manager</TableHead>
             <TableHead class="hidden text-silver sm:table-cell">Team</TableHead>
+            <TableHead class="text-silver">Captains</TableHead>
             <TableHead class="text-right text-silver">GW</TableHead>
             <TableHead class="text-right text-silver">Total</TableHead>
           </TableRow>
@@ -92,6 +93,16 @@ function movement(rank: number, lastRank: number | null) {
             </TableCell>
             <TableCell class="hidden text-silver sm:table-cell">
               {{ row.entryName }}
+            </TableCell>
+            <TableCell class="whitespace-normal text-white">
+              <p>
+                {{ row.captain ?? '—' }}
+                <span class="ml-1 font-stats text-kicker tracking-kicker text-cyan uppercase">C</span>
+              </p>
+              <p class="text-silver">
+                {{ row.viceCaptain ?? '—' }}
+                <span class="ml-1 font-stats text-kicker tracking-kicker text-silver-dim uppercase">V</span>
+              </p>
             </TableCell>
             <TableCell class="text-right text-white">{{ row.eventTotal }}</TableCell>
             <TableCell class="text-right text-star">{{ row.total }}</TableCell>
