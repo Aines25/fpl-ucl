@@ -18,7 +18,7 @@ function isActive(path: string) {
 
 <template>
   <nav
-    class="fixed inset-x-0 bottom-0 z-20 border-t border-cyan/20 bg-navy-950/95 backdrop-blur-md md:static md:border-t-0 md:border-b"
+    class="fixed inset-x-0 bottom-0 z-20 border-t border-cyan/20 bg-navy-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:static md:border-t-0 md:border-b md:pb-0"
     aria-label="Competition"
   >
     <ul class="mx-auto flex max-w-page items-stretch justify-around px-1 md:justify-start md:gap-1 md:px-6">
@@ -26,7 +26,7 @@ function isActive(path: string) {
         <NuxtLink
           :to="link.to"
           :class="[
-            'flex flex-col items-center gap-1 px-2 py-2 font-stats text-kicker tracking-kicker uppercase transition-colors md:flex-row md:gap-2 md:px-4 md:py-3 md:text-label',
+            'flex flex-col items-center gap-1 px-2 py-2.5 font-stats text-kicker tracking-kicker uppercase transition-colors md:flex-row md:gap-2 md:px-4 md:py-3 md:text-label',
             isActive(link.to) ? 'text-cyan' : 'text-silver hover:text-white',
           ]"
         >
