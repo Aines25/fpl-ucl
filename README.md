@@ -51,7 +51,7 @@ The app is a standard Nuxt 4 / Nitro server. It needs SSR (FPL calls are server-
 | Cloudflare Pages | `NITRO_PRESET=cloudflare_pages npm run build` |
 | VPS / Node | `NITRO_PRESET=node-server npm run build` then `node .output/server/index.mjs` |
 
-Point `website` (and the apex if you use it) at that deployment. Replace the old portfolio with this app.
+Point `website` (and the apex if you use it) at that deployment.
 
 ## Stack
 
