@@ -1,3 +1,4 @@
+import { competitionChipAdjustment } from '../../lib/engine/squad'
 import type { FplEventState, FplGameweekScore } from '../../lib/types/competition'
 
 export const FPL_BASE = 'https://fantasy.premierleague.com/api'
@@ -130,15 +131,16 @@ export function normaliseEvent(event: NonNullable<FplBootstrapResponse['events']
 }
 
 /**
- * FPL `entry_history.points` is the gross Gameweek score.
- * `event_transfers_cost` is the hit already taken that week.
- * Net points must subtract the hit once — never twice.
+ * FPL `entry_history.points` is the official Gameweek score, including chips.
+ * This competition drops Bench Boost bench points and the extra Triple Captain
+ * multiplier. Transfer hits are then subtracted once from that adjusted total.
  */
 export function normaliseGameweekScore(
   managerId: number,
   fplId: number,
   gameweek: number,
   payload: FplPicksResponse | null,
+  live: Map<number, { points: number }> = new Map(),
 ): FplGameweekScore {
   if (!payload?.entry_history) {
     return {
@@ -152,7 +154,8 @@ export function normaliseGameweekScore(
     }
   }
 
-  const points = payload.entry_history.points ?? 0
+  const points = (payload.entry_history.points ?? 0)
+    - competitionChipAdjustment(payload.active_chip, payload.picks ?? [], live)
   const transferCost = payload.entry_history.event_transfers_cost ?? 0
   return {
     managerId,

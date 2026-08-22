@@ -14,6 +14,7 @@ import {
   type FplManagerResponse,
   type FplPicksResponse,
 } from './fpl'
+import { getLiveStats } from './squad'
 import type { FplEventState, FplGameweekScore } from '../../lib/types/competition'
 
 const BOOTSTRAP_TTL_MS = 60_000
@@ -95,8 +96,24 @@ export async function getGameweekScore(
   }
 
   try {
-    const payload = await fplFetch<FplPicksResponse>(`/entry/${fplId}/event/${gameweek}/picks/`)
-    const score = normaliseGameweekScore(managerId, fplId, gameweek, payload)
+    const [payload, live] = await Promise.all([
+      fplFetch<FplPicksResponse>(`/entry/${fplId}/event/${gameweek}/picks/`),
+      getLiveStats(gameweek),
+    ])
+    const chip = payload.active_chip
+    const needsLive = chip === 'bboost' || chip === '3xc'
+    if (needsLive && live.size === 0) {
+      return recalledScore(managerId, gameweek) ?? {
+        managerId,
+        fplId,
+        gameweek,
+        points: 0,
+        transferCost: 0,
+        netPoints: 0,
+        available: false,
+      }
+    }
+    const score = normaliseGameweekScore(managerId, fplId, gameweek, payload, live)
     rememberScore(score)
     return score
   }

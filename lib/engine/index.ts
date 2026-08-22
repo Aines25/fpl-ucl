@@ -6,6 +6,7 @@ export { decideKnockoutWinner, resolveKnockoutTie } from './knockout'
 export { drawOpen, drawRoundOf16 } from './draw'
 export {
   chipLabel,
+  competitionChipAdjustment,
   emptySquad,
   formationFromTypes,
   formatTeamValue,

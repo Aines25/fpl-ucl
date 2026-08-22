@@ -47,6 +47,30 @@ export function chipLabel(chip: string | null | undefined) {
   return CHIP_LABELS[chip] ?? chip.replaceAll('_', ' ')
 }
 
+/**
+ * Extra FPL chip points that do not count in this competition.
+ * Bench Boost: drop the bench. Triple Captain: keep a normal 2x captain.
+ * Free Hit and Wildcard stay as FPL scored them.
+ */
+export function competitionChipAdjustment(
+  chip: string | null | undefined,
+  picks: Array<{ element: number; position: number; multiplier: number }>,
+  live: Map<number, { points: number }>,
+) {
+  if (chip === 'bboost') {
+    return picks
+      .filter((pick) => pick.position > 11)
+      .reduce((sum, pick) => sum + (live.get(pick.element)?.points ?? 0), 0)
+  }
+
+  if (chip === '3xc') {
+    const triple = picks.find((pick) => pick.multiplier === 3)
+    return triple ? (live.get(triple.element)?.points ?? 0) : 0
+  }
+
+  return 0
+}
+
 export function formationFromTypes(types: number[]) {
   const defs = types.filter((type) => type === 2).length
   const mids = types.filter((type) => type === 3).length
@@ -155,9 +179,9 @@ export function hydrateSquad(input: {
 
   const starters = slots.filter((slot) => slot.pickPosition <= 11)
   const bench = slots.filter((slot) => slot.pickPosition > 11)
-  const points = history?.points ?? 0
-  const transferCost = history?.event_transfers_cost ?? 0
   const chip = payload.active_chip ?? null
+  const points = (history?.points ?? 0) - competitionChipAdjustment(chip, picks, live)
+  const transferCost = history?.event_transfers_cost ?? 0
 
   return {
     managerId,

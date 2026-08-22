@@ -20,6 +20,9 @@ import { matchdays } from '../../data/matchdays'
       <p>
         Official Fantasy Premier League Gameweek scores are the source of truth. Transfer hits are taken from FPL and subtracted from the Gameweek points total.
       </p>
+      <p>
+        Chips count as they do in FPL except two house rules: Bench Boost does not add substitute points to the fixture total (only the starting 11 count), and Triple Captain is scored as a normal 2x captain. Free Hit still uses the Free Hit XI. Team pages still show when a chip is active and the points each player scored.
+      </p>
     </section>
 
     <section class="space-y-3">

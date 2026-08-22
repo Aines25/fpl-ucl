@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   chipLabel,
+  competitionChipAdjustment,
   formationFromTypes,
   formatTeamValue,
   formatTransfers,
@@ -38,6 +39,17 @@ describe('squad helpers', () => {
     expect(chipLabel('3xc')).toBe('Triple Captain')
     expect(chipLabel('bboost')).toBe('Bench Boost')
     expect(chipLabel(null)).toBeNull()
+  })
+
+  it('only strips bench boost and extra triple captain points', () => {
+    const picks = [
+      { element: 9, position: 9, multiplier: 3 },
+      { element: 12, position: 12, multiplier: 1 },
+    ]
+    expect(competitionChipAdjustment('bboost', picks, live)).toBe(2)
+    expect(competitionChipAdjustment('3xc', picks, live)).toBe(8)
+    expect(competitionChipAdjustment('freehit', picks, live)).toBe(0)
+    expect(competitionChipAdjustment(null, picks, live)).toBe(0)
   })
 
   it('formats value and transfers', () => {
@@ -87,7 +99,8 @@ describe('squad helpers', () => {
 
     expect(squad.available).toBe(true)
     expect(squad.formation).toBe('3-4-3')
-    expect(squad.netPoints).toBe(68)
+    expect(squad.points).toBe(64)
+    expect(squad.netPoints).toBe(60)
     expect(squad.transfers).toBe(2)
     expect(squad.chipLabel).toBe('Triple Captain')
     expect(squad.starters).toHaveLength(11)
@@ -100,5 +113,45 @@ describe('squad helpers', () => {
 
     expect(squad.bench[0]?.points).toBe(2)
     expect(squad.bench[0]?.counting).toBe(false)
+  })
+
+  it('drops bench boost points from the competition total but keeps bench scores on the pitch', () => {
+    const squad = hydrateSquad({
+      managerId: 16,
+      fplId: 12878,
+      name: 'Christian Smith-Rose',
+      teamName: 'Test FC',
+      gameweek: 1,
+      catalogue,
+      live,
+      payload: {
+        active_chip: 'bboost',
+        entry_history: {
+          points: 35,
+          event_transfers: 0,
+          event_transfers_cost: 0,
+        },
+        picks: [
+          { element: 1, position: 1, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 2, position: 2, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 3, position: 3, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 4, position: 4, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 5, position: 5, multiplier: 1, is_captain: false, is_vice_captain: true },
+          { element: 6, position: 6, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 7, position: 7, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 8, position: 8, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 9, position: 9, multiplier: 2, is_captain: true, is_vice_captain: false },
+          { element: 10, position: 10, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 11, position: 11, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 12, position: 12, multiplier: 1, is_captain: false, is_vice_captain: false },
+        ],
+      },
+    })
+
+    expect(squad.chipLabel).toBe('Bench Boost')
+    expect(squad.points).toBe(33)
+    expect(squad.netPoints).toBe(33)
+    expect(squad.bench[0]?.points).toBe(2)
+    expect(squad.bench[0]?.counting).toBe(true)
   })
 })
