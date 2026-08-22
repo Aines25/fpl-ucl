@@ -1,4 +1,4 @@
-import type { CataloguePlayer, ElementType, FplSquadView, LivePlayerStats, SquadSlot } from '../types/squad'
+import type { CataloguePlayer, ClubFixture, ElementType, FplSquadView, LivePlayerStats, SquadSlot } from '../types/squad'
 
 export interface SquadPick {
   element: number
@@ -130,12 +130,14 @@ function slotFromPick(
   pick: SquadPick,
   catalogue: Map<number, CataloguePlayer>,
   live: Map<number, LivePlayerStats>,
+  fixtures: Map<number, ClubFixture>,
 ): SquadSlot {
   const player = catalogue.get(pick.element)
   const stats = live.get(pick.element)
   const elementType = asElementType(player?.elementType)
   const rawPoints = stats?.points ?? 0
   const counting = pick.multiplier > 0
+  const teamId = player?.teamId ?? 0
 
   return {
     elementId: pick.element,
@@ -149,9 +151,11 @@ function slotFromPick(
     counting,
     webName: player?.webName ?? 'Unknown',
     elementType,
+    teamId,
     teamCode: player?.teamCode ?? 0,
     photoUrl: playerPhotoUrl(player?.code ?? 0),
     shirtUrl: playerShirtUrl(player?.teamCode ?? 0, elementType === 1),
+    fixture: teamId ? fixtures.get(teamId) ?? null : null,
   }
 }
 
@@ -164,8 +168,10 @@ export function hydrateSquad(input: {
   payload: SquadPicksPayload | null
   catalogue: Map<number, CataloguePlayer>
   live: Map<number, LivePlayerStats>
+  fixtures?: Map<number, ClubFixture>
 }): FplSquadView {
   const { managerId, fplId, name, teamName, gameweek, payload, catalogue, live } = input
+  const fixtures = input.fixtures ?? new Map<number, ClubFixture>()
   const picks = payload?.picks ?? []
   const history = payload?.entry_history
 
@@ -175,7 +181,7 @@ export function hydrateSquad(input: {
 
   const slots = [...picks]
     .sort((a, b) => a.position - b.position)
-    .map((pick) => slotFromPick(pick, catalogue, live))
+    .map((pick) => slotFromPick(pick, catalogue, live, fixtures))
 
   const starters = slots.filter((slot) => slot.pickPosition <= 11)
   const bench = slots.filter((slot) => slot.pickPosition > 11)

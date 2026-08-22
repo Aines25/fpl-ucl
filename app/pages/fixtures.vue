@@ -31,7 +31,8 @@ const currentMap = computed(() => matchdays.find((entry) => entry.matchday === s
 <template>
   <div>
     <SectionHeading kicker="Schedule" title="Fixtures" />
-    <MatchdaySelector v-model="selected" class="mb-6" />
+    <MatchdaySelector v-model="selected" class="mb-4" />
+    <MatchdayDigest class="mb-6" :matchday="selected" />
     <p class="mb-4 font-stats text-label text-silver">
       {{ currentMap?.label }} · FPL Gameweek {{ currentMap?.fplGameweek }}
     </p>

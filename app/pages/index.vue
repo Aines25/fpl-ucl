@@ -4,6 +4,11 @@ import { fixtures, groupIds } from '../../data'
 const { snapshot, status } = useCompetition()
 const { resultById } = useFixtures()
 
+useSeoMeta({
+  ogTitle: 'Champions League · 2026/27',
+  ogDescription: 'Private FPL Champions League — groups, fixtures, and the overall league table.',
+})
+
 const currentFixtures = computed(() => {
   const matchday = snapshot.value?.currentMatchday ?? 1
   return fixtures.filter((fixture) => fixture.matchday === matchday && fixture.stage === 'group')
@@ -20,6 +25,9 @@ function fixturesForGroup(group: string) {
       :kicker="snapshot?.currentLabel ?? 'Matchday 1'"
       title="Overview"
     />
+
+    <DeadlineBar class="mb-4" />
+    <MatchdayDigest class="mb-6" />
 
     <p
       v-if="snapshot && snapshot.linkedManagers < snapshot.totalManagers"

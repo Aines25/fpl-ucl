@@ -64,11 +64,41 @@ export interface FplLiveResponse {
   }>
 }
 
+export interface FplFixtureResponse {
+  id: number
+  event: number | null
+  kickoff_time: string | null
+  team_h: number
+  team_a: number
+  started: boolean | null
+  finished: boolean
+}
+
 export interface FplManagerResponse {
   id: number
   name: string
   player_first_name?: string
   player_last_name?: string
+}
+
+export interface FplClassicLeagueResponse {
+  league?: {
+    id: number
+    name: string
+  }
+  standings?: {
+    has_next?: boolean
+    page?: number
+    results?: Array<{
+      event_total?: number
+      player_name?: string
+      rank?: number
+      last_rank?: number | null
+      total?: number
+      entry?: number
+      entry_name?: string
+    }>
+  }
 }
 
 export function isRetryableStatus(status: number) {

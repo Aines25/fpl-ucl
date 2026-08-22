@@ -14,6 +14,19 @@ export interface LivePlayerStats {
   points: number
 }
 
+export interface ClubInfo {
+  id: number
+  shortName: string
+  code: number
+}
+
+export interface ClubFixture {
+  opponent: string
+  kickoff: string | null
+  started: boolean
+  finished: boolean
+}
+
 export interface SquadSlot {
   elementId: number
   pickPosition: number
@@ -26,9 +39,11 @@ export interface SquadSlot {
   counting: boolean
   webName: string
   elementType: ElementType
+  teamId: number
   teamCode: number
   photoUrl: string
   shirtUrl: string
+  fixture: ClubFixture | null
 }
 
 export interface FplSquadView {

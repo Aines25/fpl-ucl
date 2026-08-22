@@ -1,10 +1,12 @@
 import { getPlayer } from '../../data/players'
+import { indexClubFixtures } from '../../lib/engine/club-fixtures'
 import { emptySquad, hydrateSquad } from '../../lib/engine/squad'
-import type { CataloguePlayer, FplSquadView, LivePlayerStats } from '../../lib/types/squad'
+import type { CataloguePlayer, ClubInfo, FplSquadView, LivePlayerStats } from '../../lib/types/squad'
 import { isFresh, type Timed } from './cache'
 import {
   fplFetch,
   type FplBootstrapResponse,
+  type FplFixtureResponse,
   type FplLiveResponse,
   type FplManagerResponse,
   type FplPicksResponse,
@@ -14,27 +16,41 @@ const CATALOGUE_TTL_MS = 30 * 60 * 1000
 const LIVE_TTL_MS = 45_000
 const SQUAD_TTL_MS = 45_000
 
-let catalogueCache: Timed<Map<number, CataloguePlayer>> | null = null
-let catalogueInflight: Promise<Map<number, CataloguePlayer>> | null = null
+interface BootstrapCatalogue {
+  players: Map<number, CataloguePlayer>
+  teams: Map<number, ClubInfo>
+}
+
+let catalogueCache: Timed<BootstrapCatalogue> | null = null
+let catalogueInflight: Promise<BootstrapCatalogue> | null = null
 
 const liveCache = new Map<number, Timed<Map<number, LivePlayerStats>>>()
 const liveInflight = new Map<number, Promise<Map<number, LivePlayerStats>>>()
+const fixtureCache = new Map<number, Timed<FplFixtureResponse[]>>()
+const fixtureInflight = new Map<number, Promise<FplFixtureResponse[]>>()
 const squadCache = new Map<string, Timed<FplSquadView>>()
 const squadInflight = new Map<string, Promise<FplSquadView>>()
 
-export async function getPlayerCatalogue() {
+async function getBootstrapCatalogue() {
   if (isFresh(catalogueCache, CATALOGUE_TTL_MS) && catalogueCache) {
     return catalogueCache.data
   }
   if (!catalogueInflight) {
     catalogueInflight = fplFetch<FplBootstrapResponse>('/bootstrap-static/')
       .then((payload) => {
-        const teams = new Map((payload.teams ?? []).map((team) => [team.id, team]))
-        const data = new Map<number, CataloguePlayer>()
+        const teams = new Map<number, ClubInfo>()
+        for (const team of payload.teams ?? []) {
+          teams.set(team.id, {
+            id: team.id,
+            shortName: team.short_name,
+            code: team.code,
+          })
+        }
+        const players = new Map<number, CataloguePlayer>()
         for (const element of payload.elements ?? []) {
           const team = teams.get(element.team)
           const elementType = element.element_type
-          data.set(element.id, {
+          players.set(element.id, {
             id: element.id,
             webName: element.web_name,
             teamId: element.team,
@@ -43,6 +59,7 @@ export async function getPlayerCatalogue() {
             code: element.code,
           })
         }
+        const data = { players, teams }
         catalogueCache = { at: Date.now(), data }
         return data
       })
@@ -51,6 +68,31 @@ export async function getPlayerCatalogue() {
       })
   }
   return catalogueInflight
+}
+
+export async function getPlayerCatalogue() {
+  return (await getBootstrapCatalogue()).players
+}
+
+export async function getGameweekFixtures(gameweek: number) {
+  const cached = fixtureCache.get(gameweek)
+  if (isFresh(cached, LIVE_TTL_MS) && cached) return cached.data
+
+  let inflight = fixtureInflight.get(gameweek)
+  if (!inflight) {
+    inflight = fplFetch<FplFixtureResponse[]>(`/fixtures/?event=${gameweek}`)
+      .then((payload) => {
+        const data = payload ?? []
+        fixtureCache.set(gameweek, { at: Date.now(), data })
+        return data
+      })
+      .catch(() => cached?.data ?? [])
+      .finally(() => {
+        fixtureInflight.delete(gameweek)
+      })
+    fixtureInflight.set(gameweek, inflight)
+  }
+  return inflight
 }
 
 export async function getLiveStats(gameweek: number) {
@@ -93,12 +135,13 @@ export async function getSquad(managerId: number, gameweek: number): Promise<Fpl
   let inflight = squadInflight.get(key)
   if (!inflight) {
     inflight = Promise.all([
-      getPlayerCatalogue(),
+      getBootstrapCatalogue(),
       getLiveStats(gameweek),
+      getGameweekFixtures(gameweek),
       fplFetch<FplPicksResponse>(`/entry/${player.fplId}/event/${gameweek}/picks/`).catch(() => null),
       fplFetch<FplManagerResponse>(`/entry/${player.fplId}/`).catch(() => null),
     ])
-      .then(([catalogue, live, payload, manager]) => {
+      .then(([catalogue, live, fixtures, payload, manager]) => {
         const data = hydrateSquad({
           managerId: player.id,
           fplId: player.fplId,
@@ -106,8 +149,9 @@ export async function getSquad(managerId: number, gameweek: number): Promise<Fpl
           teamName: manager?.name ?? null,
           gameweek,
           payload,
-          catalogue,
+          catalogue: catalogue.players,
           live,
+          fixtures: indexClubFixtures(fixtures, catalogue.teams),
         })
         squadCache.set(key, { at: Date.now(), data })
         return data

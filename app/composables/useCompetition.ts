@@ -1,5 +1,5 @@
 import { useIntervalFn } from '@vueuse/core'
-import type { FixtureResult, FplGameweekScore, KnockoutTieResult, StandingRow } from '../../lib/types/competition'
+import type { FixtureResult, FplGameweekScore, GroupScenarios, KnockoutTieResult, StandingRow } from '../../lib/types/competition'
 import type { GroupId } from '../../lib/types/competition'
 import { competition } from '../../data/competition'
 
@@ -21,6 +21,8 @@ export interface CompetitionSnapshot {
   results: FixtureResult[]
   standings: Record<GroupId, StandingRow[]>
   knockout: KnockoutTieResult[]
+  scenarios: Record<GroupId, GroupScenarios>
+  frozenGameweeks: number[]
   linkedManagers: number
   totalManagers: number
 }

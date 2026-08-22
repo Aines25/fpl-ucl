@@ -10,11 +10,13 @@
     "postinstall": "nuxt prepare",
     "test": "vitest run",
     "generate:fixtures": "tsx scripts/generate-group-fixtures.ts",
-    "draw:knockout": "tsx scripts/draw-knockout.ts"
+    "draw:knockout": "tsx scripts/draw-knockout.ts",
+    "freeze:scores": "tsx scripts/freeze-scores.ts"
   },
   "dependencies": {
     "@lucide/vue": "^1.33.0",
     "@nuxt/fonts": "^0.14.0",
+    "@takumi-rs/core": "^2.10.0",
     "@vueuse/core": "^14.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

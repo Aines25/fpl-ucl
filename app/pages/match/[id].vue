@@ -2,6 +2,7 @@
 import { ArrowLeft } from '@lucide/vue'
 import { fixtures } from '../../../data'
 import { getPlayer } from '../../../data/players'
+import { compareSquads } from '../../../lib/engine/differentials'
 
 const route = useRoute()
 const fixtureId = String(route.params.id ?? '')
@@ -19,9 +20,25 @@ const { squad: homeSquad, loading: homeLoading } = useSquad(fixture.homeId, game
 const { squad: awaySquad, loading: awayLoading } = useSquad(fixture.awayId, gameweek)
 const { resultById } = useFixtures()
 const result = computed(() => resultById.value.get(fixture.id))
+const differentials = computed(() => compareSquads(homeSquad.value, awaySquad.value))
+
+const homeScore = computed(() => result.value?.homeScore ?? homeSquad.value?.netPoints ?? null)
+const awayScore = computed(() => result.value?.awayScore ?? awaySquad.value?.netPoints ?? null)
+const scoreLine = computed(() => {
+  const left = homeScore.value === null ? '–' : String(homeScore.value)
+  const right = awayScore.value === null ? '–' : String(awayScore.value)
+  return `${home.name} ${left}–${right} ${away.name}`
+})
 
 useHead({
   title: `${home.name} vs ${away.name} · Champions League`,
+})
+
+useSeoMeta({
+  ogTitle: `${home.name} vs ${away.name}`,
+  ogDescription: scoreLine,
+  twitterTitle: `${home.name} vs ${away.name}`,
+  twitterDescription: scoreLine,
 })
 </script>
 
@@ -41,11 +58,27 @@ useHead({
     />
 
     <div class="mb-6 flex items-center justify-center gap-4">
-      <ScoreDisplay :value="result?.homeScore ?? homeSquad?.netPoints ?? null" :winner="result?.winnerId === fixture.homeId" size="lg" />
+      <ScoreDisplay :value="homeScore" :winner="result?.winnerId === fixture.homeId" size="lg" />
       <span class="font-stats text-kicker tracking-kicker text-silver uppercase">v</span>
-      <ScoreDisplay :value="result?.awayScore ?? awaySquad?.netPoints ?? null" :winner="result?.winnerId === fixture.awayId" size="lg" />
+      <ScoreDisplay :value="awayScore" :winner="result?.winnerId === fixture.awayId" size="lg" />
       <StatusBadge :status="result?.status ?? 'scheduled'" />
     </div>
+
+    <ShareCard
+      class="mb-6"
+      :fixture="fixture"
+      :result="result"
+      :home-score="homeScore"
+      :away-score="awayScore"
+    />
+
+    <DifferentialsPanel
+      v-if="differentials"
+      class="mb-6"
+      :home-name="home.name"
+      :away-name="away.name"
+      :summary="differentials"
+    />
 
     <div class="grid gap-6 lg:grid-cols-2">
       <TeamPitchPanel

@@ -16,3 +16,15 @@ export {
   playerPhotoUrl,
   playerShirtUrl,
 } from './squad'
+export { alignArchivedScores, archiveIsComplete } from './archive'
+export {
+  formatFixtureKickoff,
+  formatUpcomingFixture,
+  indexClubFixtures,
+  isPendingFixture,
+  pickClubFixture,
+} from './club-fixtures'
+export { compareSquads, competitionMultiplier } from './differentials'
+export { countdownParts, currentLiveEvent, matchdayForEvent, nextDeadlineEvent } from './deadline'
+export { scenariosForGroup, remainingGroupFixtures } from './scenarios'
+export { upcomingFixtureFor } from './upcoming'

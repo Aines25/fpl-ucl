@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { BookOpen, CalendarDays, GitFork, LayoutDashboard, Table2 } from '@lucide/vue'
+import { BookOpen, CalendarDays, GitFork, LayoutDashboard, Table2, Trophy } from '@lucide/vue'
 
 const route = useRoute()
 
 const links = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
   { to: '/groups', label: 'Groups', icon: Table2 },
+  { to: '/league', label: 'League', icon: Trophy },
   { to: '/fixtures', label: 'Fixtures', icon: CalendarDays },
   { to: '/knockout', label: 'Knockout', icon: GitFork },
   { to: '/rules', label: 'Rules', icon: BookOpen },
@@ -26,7 +27,7 @@ function isActive(path: string) {
         <NuxtLink
           :to="link.to"
           :class="[
-            'flex flex-col items-center gap-1 px-2 py-2.5 font-stats text-kicker tracking-kicker uppercase transition-colors md:flex-row md:gap-2 md:px-4 md:py-3 md:text-label',
+            'flex flex-col items-center gap-1 px-1.5 py-2.5 font-stats text-[10px] tracking-kicker uppercase transition-colors sm:text-kicker md:flex-row md:gap-2 md:px-3 md:py-3 md:text-label',
             isActive(link.to) ? 'text-cyan' : 'text-silver hover:text-white',
           ]"
         >

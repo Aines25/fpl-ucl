@@ -4,6 +4,7 @@ export const competition = {
   name: 'Champions League',
   season: '2026/27',
   host: 'christiancodes.co.uk',
+  fplLeagueId: 15643,
 
   groupStage: {
     teamsPerGroup: 4,

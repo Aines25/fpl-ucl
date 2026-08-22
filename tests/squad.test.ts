@@ -110,6 +110,8 @@ describe('squad helpers', () => {
     expect(captain?.webName).toBe('Haaland')
     expect(captain?.points).toBe(24)
     expect(captain?.counting).toBe(true)
+    expect(captain?.teamId).toBe(4)
+    expect(captain?.fixture).toBeNull()
 
     expect(squad.bench[0]?.points).toBe(2)
     expect(squad.bench[0]?.counting).toBe(false)
@@ -153,5 +155,29 @@ describe('squad helpers', () => {
     expect(squad.netPoints).toBe(33)
     expect(squad.bench[0]?.points).toBe(2)
     expect(squad.bench[0]?.counting).toBe(true)
+  })
+
+  it('attaches the club fixture to each pick', () => {
+    const squad = hydrateSquad({
+      managerId: 16,
+      fplId: 12878,
+      name: 'Christian Smith-Rose',
+      teamName: 'Test FC',
+      gameweek: 1,
+      catalogue,
+      live,
+      fixtures: new Map([
+        [4, { opponent: 'ARS', kickoff: '2026-08-23T15:00:00Z', started: false, finished: false }],
+      ]),
+      payload: {
+        entry_history: { points: 8, event_transfers: 0, event_transfers_cost: 0 },
+        picks: [
+          { element: 9, position: 1, multiplier: 2, is_captain: true, is_vice_captain: false },
+        ],
+      },
+    })
+
+    expect(squad.starters[0]?.fixture?.opponent).toBe('ARS')
+    expect(squad.starters[0]?.fixture?.started).toBe(false)
   })
 })

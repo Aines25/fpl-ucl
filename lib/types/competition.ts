@@ -52,6 +52,7 @@ export interface FplGameweekScore {
   transferCost: number
   netPoints: number
   available: boolean
+  frozen?: boolean
 }
 
 export interface FplEventState {
@@ -99,3 +100,28 @@ export interface KnockoutTieResult {
   status: FixtureStatus
   decidedByTiebreak: boolean
 }
+
+export type QualificationStatus = 'qualified' | 'contention' | 'eliminated'
+
+export interface QualificationLine {
+  playerId: number
+  status: QualificationStatus
+  qualifyCount: number
+  scenarioCount: number
+  message: string
+}
+
+export interface GroupScenarios {
+  group: GroupId
+  remainingFixtures: number
+  enumerated: boolean
+  placeholder?: string
+  lines: QualificationLine[]
+}
+
+export interface FrozenGameweekArchive {
+  frozenAt: string
+  scores: FplGameweekScore[]
+}
+
+export type FrozenScoresFile = Record<string, FrozenGameweekArchive>

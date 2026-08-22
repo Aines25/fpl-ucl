@@ -1,8 +1,10 @@
+import { committedFrozenGameweeks } from '~~/data/frozen-scores'
 import { competition, fixtures, groupIds, groups, knockoutTies, matchdays, players } from '~~/data'
 import { determineFixtureResult } from '~~/lib/engine/results'
 import { standingsForGroup } from '~~/lib/engine/tiebreakers'
 import { resolveKnockoutTie } from '~~/lib/engine/knockout'
-import type { FplEventState, GroupId } from '~~/lib/types/competition'
+import { scenariosForGroup } from '~~/lib/engine/scenarios'
+import type { FplEventState, GroupId, GroupScenarios } from '~~/lib/types/competition'
 import { isFresh, readSharedCache, writeSharedCache, type Timed } from './cache'
 import { getBootstrap, getScoresForGameweeks, maxAgeForEvents } from './scores'
 
@@ -61,7 +63,22 @@ export async function buildCompetitionSnapshot() {
     resolveKnockoutTie(tie, fixtures, results, eventMap),
   )
 
+  const scenarios = Object.fromEntries(
+    groupIds.map((group) => [
+      group,
+      scenariosForGroup(
+        group,
+        groups[group],
+        fixtures,
+        results,
+        players,
+        competition.groupStage.qualifyPerGroup,
+      ),
+    ]),
+  ) as Record<GroupId, GroupScenarios>
+
   const currentMap = matchdays.find((entry) => entry.fplGameweek === currentGameweek) ?? matchdays[0]
+  const liveFrozen = [...new Set(scores.filter((score) => score.frozen).map((score) => score.gameweek))]
 
   return {
     competition,
@@ -73,6 +90,8 @@ export async function buildCompetitionSnapshot() {
     results,
     standings,
     knockout,
+    scenarios,
+    frozenGameweeks: [...new Set([...committedFrozenGameweeks(), ...liveFrozen])].sort((left, right) => left - right),
     linkedManagers: players.filter((player) => player.fplId > 0).length,
     totalManagers: players.length,
   }
