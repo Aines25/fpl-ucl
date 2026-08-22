@@ -1,6 +1,6 @@
 # FPL Champions League
 
-Private Fantasy Premier League competition site for christiancodes.co.uk. Old UEFA Champions League format: 8 groups of 4, six group matchdays, then two-legged knockouts and a one-leg final.
+Private Fantasy Premier League competition site. Old UEFA Champions League format: 8 groups of 4, six group matchdays, then two-legged knockouts and a one-leg final.
 
 ## Quick start
 
