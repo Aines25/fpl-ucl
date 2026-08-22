@@ -1,6 +1,6 @@
 # FPL Champions League
 
-Private Fantasy Premier League competition site for christiancodes.co.uk. Old UEFA Champions League format: 8 groups of 4, six group matchdays, then two-legged knockouts and a one-leg final.
+Private Fantasy Premier League competition site. Old UEFA Champions League format: 8 groups of 4, six group matchdays, then two-legged knockouts and a one-leg final.
 
 ## Quick start
 
@@ -40,7 +40,7 @@ npx tsx scripts/draw-knockout.ts sf --ids 1,7,13,19
 
 Paste the printed fixtures/ties into [`data/knockout.ts`](data/knockout.ts) and commit.
 
-## Deploy to christiancodes.co.uk
+## Deploy
 
 The app is a standard Nuxt 4 / Nitro server. It needs SSR (FPL calls are server-side). Pick the host that currently serves the domain and set the matching preset if it is not auto-detected:
 
@@ -51,7 +51,7 @@ The app is a standard Nuxt 4 / Nitro server. It needs SSR (FPL calls are server-
 | Cloudflare Pages | `NITRO_PRESET=cloudflare_pages npm run build` |
 | VPS / Node | `NITRO_PRESET=node-server npm run build` then `node .output/server/index.mjs` |
 
-Point `www.christiancodes.co.uk` (and the apex if you use it) at that deployment. Replace the old portfolio with this app.
+Point `website` (and the apex if you use it) at that deployment.
 
 ## Stack
 
