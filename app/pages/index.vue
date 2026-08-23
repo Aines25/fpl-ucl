@@ -57,7 +57,7 @@ function fixturesForGroup(group: string) {
           />
         </div>
         <GroupTable
-          v-if="snapshot?.standings[group]"
+          v-if="snapshot?.standings?.[group]"
           :group="group"
           :rows="snapshot.standings[group]"
         />

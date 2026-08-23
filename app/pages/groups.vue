@@ -12,10 +12,10 @@ const { snapshot } = useCompetition()
       <div v-for="group in groupIds" :key="group" class="space-y-3">
         <GroupTable
           :group="group"
-          :rows="snapshot?.standings[group] ?? []"
+          :rows="snapshot?.standings?.[group] ?? []"
         />
         <QualificationCard
-          v-if="snapshot?.scenarios[group]"
+          v-if="snapshot?.scenarios?.[group]"
           :scenarios="snapshot.scenarios[group]"
         />
       </div>

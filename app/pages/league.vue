@@ -21,8 +21,8 @@ const mobileColumns = ref<MobileColumns>('points')
 const gameweek = computed(() => snapshot.value?.currentGameweek ?? 1)
 const { squad, loading, error } = useEntrySquad(expandedEntryId, gameweek)
 const stillInUcl = computed(() => {
-  if (!snapshot.value) return new Set<number>()
-  return activeCompetitionIds(snapshot.value.standings, snapshot.value.knockout)
+  if (!snapshot.value?.standings) return new Set<number>()
+  return activeCompetitionIds(snapshot.value.standings, snapshot.value.knockout ?? [])
 })
 
 useHead({

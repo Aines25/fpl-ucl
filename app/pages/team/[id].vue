@@ -23,7 +23,7 @@ const gameweek = computed(() => {
 
 const { squad, loading } = useSquad(player.id, gameweek)
 const qualification = computed(() => {
-  const group = snapshot.value?.scenarios[player.group]
+  const group = snapshot.value?.scenarios?.[player.group]
   if (!group?.enumerated) return undefined
   return group.lines.find((line) => line.playerId === player.id)
 })
