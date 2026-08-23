@@ -58,7 +58,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="relative z-10 border-b border-cyan/20 bg-navy-950/80 backdrop-blur-md">
+  <header class="relative border-b border-cyan/20 bg-navy-950/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
     <div class="mx-auto flex max-w-page items-center gap-3 px-4 py-3 sm:px-6">
       <NuxtLink to="/" class="flex min-w-0 flex-1 items-center gap-3">
         <StarballMark size="sm" />
