@@ -155,6 +155,7 @@ function onRowKeydown(event: KeyboardEvent, entryId: number) {
                       :loading="loading"
                       :error="error"
                       scoring="official"
+                      layout="split"
                       size="sm"
                     />
                     <NuxtLink

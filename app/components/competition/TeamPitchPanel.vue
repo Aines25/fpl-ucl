@@ -7,10 +7,12 @@ withDefaults(defineProps<{
   error?: unknown
   size?: 'sm' | 'md'
   scoring?: 'competition' | 'official'
+  layout?: 'stack' | 'split'
 }>(), {
   loading: false,
   size: 'md',
   scoring: 'competition',
+  layout: 'stack',
 })
 </script>
 
@@ -28,11 +30,18 @@ withDefaults(defineProps<{
     >
       Couldn’t load this squad. Click the row again to retry.
     </p>
-    <template v-else>
-      <TeamStatsBar v-if="squad" :squad="squad" :scoring="scoring" />
-      <TeamTransfers v-if="squad" :squad="squad" />
-      <TeamChips v-if="squad" :squad="squad" />
+    <div
+      v-else
+      :class="layout === 'split'
+        ? 'grid gap-3 lg:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)] lg:items-start'
+        : 'space-y-3'"
+    >
+      <div class="space-y-3">
+        <TeamStatsBar v-if="squad" :squad="squad" :scoring="scoring" />
+        <TeamTransfers v-if="squad" :squad="squad" />
+        <TeamChips v-if="squad" :squad="squad" />
+      </div>
       <PitchView :squad="squad" :size="size" />
-    </template>
+    </div>
   </div>
 </template>
