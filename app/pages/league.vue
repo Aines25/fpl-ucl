@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, ChevronDown, Minus } from '@lucide/vue'
+import { chipLabel } from '../../lib/engine/squad'
 import { activeCompetitionIds } from '../../lib/engine/qualification'
 import {
   Table,
@@ -13,7 +14,10 @@ import {
 const { league, status } = useLeague()
 const { snapshot } = useCompetition()
 
+type MobileColumns = 'points' | 'picks'
+
 const expandedEntryId = ref<number | null>(null)
+const mobileColumns = ref<MobileColumns>('points')
 const gameweek = computed(() => snapshot.value?.currentGameweek ?? 1)
 const { squad, loading, error } = useEntrySquad(expandedEntryId, gameweek)
 const stillInUcl = computed(() => {
@@ -53,6 +57,14 @@ function onRowKeydown(event: KeyboardEvent, entryId: number) {
     toggleRow(entryId)
   }
 }
+
+function mobileCol(view: MobileColumns) {
+  return mobileColumns.value === view ? '' : 'hidden sm:table-cell'
+}
+
+function rowChip(chip: string | null) {
+  return chipLabel(chip) ?? 'No chip used'
+}
 </script>
 
 <template>
@@ -76,6 +88,31 @@ function onRowKeydown(event: KeyboardEvent, entryId: number) {
         Gold rows are still in the Champions League
       </p>
 
+      <div
+        class="mb-3 grid grid-cols-2 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 sm:hidden"
+        role="group"
+        aria-label="League columns"
+      >
+        <button
+          type="button"
+          class="rounded-sm px-2 py-1.5 font-stats text-kicker tracking-kicker uppercase"
+          :class="mobileColumns === 'points' ? 'bg-cyan/20 text-white' : 'text-silver'"
+          :aria-pressed="mobileColumns === 'points'"
+          @click="mobileColumns = 'points'"
+        >
+          GW / Total
+        </button>
+        <button
+          type="button"
+          class="rounded-sm px-2 py-1.5 font-stats text-kicker tracking-kicker uppercase"
+          :class="mobileColumns === 'picks' ? 'bg-cyan/20 text-white' : 'text-silver'"
+          :aria-pressed="mobileColumns === 'picks'"
+          @click="mobileColumns = 'picks'"
+        >
+          Captains / Transfers
+        </button>
+      </div>
+
       <div class="overflow-hidden rounded-md border border-cyan/20 bg-navy-800/80 shadow-card">
         <Table class="font-stats text-label">
           <TableHeader>
@@ -83,11 +120,10 @@ function onRowKeydown(event: KeyboardEvent, entryId: number) {
               <TableHead class="w-10 text-silver">#</TableHead>
               <TableHead class="w-8 text-silver" />
               <TableHead class="text-silver">Manager</TableHead>
-              <TableHead class="hidden text-silver sm:table-cell">Team</TableHead>
-              <TableHead class="text-silver">Captains</TableHead>
-              <TableHead class="text-right text-silver">Transfers</TableHead>
-              <TableHead class="text-right text-silver">GW</TableHead>
-              <TableHead class="text-right text-silver">Total</TableHead>
+              <TableHead :class="['text-silver', mobileCol('picks')]">Captains</TableHead>
+              <TableHead :class="['text-right text-silver', mobileCol('picks')]">Transfers</TableHead>
+              <TableHead :class="['text-right text-silver', mobileCol('points')]">GW</TableHead>
+              <TableHead :class="['text-right text-silver', mobileCol('points')]">Total</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -116,7 +152,10 @@ function onRowKeydown(event: KeyboardEvent, entryId: number) {
                   />
                   <Minus v-else class="mx-auto size-3.5 text-silver-dim" />
                 </TableCell>
-                <TableCell class="font-medium text-white">
+                <TableCell class="max-w-40 min-w-0 whitespace-normal font-medium text-white sm:max-w-none">
+                  <p class="truncate text-[11px] leading-tight font-normal text-silver">
+                    {{ row.entryName }}
+                  </p>
                   <span class="inline-flex items-center gap-2">
                     {{ row.playerName }}
                     <ChevronDown
@@ -124,11 +163,11 @@ function onRowKeydown(event: KeyboardEvent, entryId: number) {
                       :class="expandedEntryId === row.entryId ? 'rotate-180 text-cyan' : ''"
                     />
                   </span>
+                  <p class="text-[11px] leading-tight font-normal text-silver-dim">
+                    {{ rowChip(row.chip) }}
+                  </p>
                 </TableCell>
-                <TableCell class="hidden text-silver sm:table-cell">
-                  {{ row.entryName }}
-                </TableCell>
-                <TableCell class="whitespace-normal text-white">
+                <TableCell :class="['whitespace-normal text-white', mobileCol('picks')]">
                   <p>
                     {{ row.captain ?? '—' }}
                     <span class="ml-1 font-stats text-kicker tracking-kicker text-cyan uppercase">C</span>
@@ -138,17 +177,21 @@ function onRowKeydown(event: KeyboardEvent, entryId: number) {
                     <span class="ml-1 font-stats text-kicker tracking-kicker text-silver-dim uppercase">V</span>
                   </p>
                 </TableCell>
-                <TableCell class="text-right text-white">
+                <TableCell :class="['text-right text-white', mobileCol('picks')]">
                   {{ row.transfers ?? '—' }}
                 </TableCell>
-                <TableCell class="text-right text-white">{{ row.eventTotal }}</TableCell>
-                <TableCell class="text-right text-star">{{ row.total }}</TableCell>
+                <TableCell :class="['text-right text-white', mobileCol('points')]">
+                  {{ row.eventTotal }}
+                </TableCell>
+                <TableCell :class="['text-right text-star', mobileCol('points')]">
+                  {{ row.total }}
+                </TableCell>
               </TableRow>
               <TableRow
                 v-if="expandedEntryId === row.entryId"
                 class="border-cyan/10 hover:bg-transparent"
               >
-                <TableCell colspan="8" class="whitespace-normal p-0 align-top">
+                <TableCell colspan="7" class="whitespace-normal p-0 align-top">
                   <div class="animate-in fade-in slide-in-from-top-2 space-y-3 bg-navy-900/60 p-4 duration-200">
                     <TeamPitchPanel
                       :squad="squad"

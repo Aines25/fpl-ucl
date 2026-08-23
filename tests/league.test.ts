@@ -25,6 +25,7 @@ describe('normaliseLeagueStanding', () => {
       captain: null,
       viceCaptain: null,
       transfers: null,
+      chip: null,
     })
   })
 })
@@ -41,6 +42,20 @@ describe('extrasFromPicks', () => {
       captain: 'Haaland',
       viceCaptain: 'Salah',
       transfers: 2,
+      chip: null,
+    })
+  })
+
+  it('attaches the active chip when one is played', () => {
+    expect(extrasFromPicks({
+      active_chip: '3xc',
+      entry_history: { event_transfers: 0 },
+      picks: [],
+    }, new Map())).toEqual({
+      captain: null,
+      viceCaptain: null,
+      transfers: 0,
+      chip: '3xc',
     })
   })
 })
