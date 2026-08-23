@@ -13,6 +13,7 @@ export {
   formatTransfers,
   groupStartersByLine,
   hydrateSquad,
+  squadMovesFromTransfers,
   playerPhotoUrl,
   playerShirtUrl,
 } from './squad'

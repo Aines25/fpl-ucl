@@ -1,6 +1,6 @@
 import { getPlayer } from '../../data/players'
 import { indexClubFixtures } from '../../lib/engine/club-fixtures'
-import { emptySquad, hydrateSquad } from '../../lib/engine/squad'
+import { emptySquad, hydrateSquad, squadMovesFromTransfers } from '../../lib/engine/squad'
 import type { CataloguePlayer, ClubInfo, FplSquadView, LivePlayerStats } from '../../lib/types/squad'
 import { isFresh, type Timed } from './cache'
 import {
@@ -10,6 +10,7 @@ import {
   type FplLiveResponse,
   type FplManagerResponse,
   type FplPicksResponse,
+  type FplTransferResponse,
 } from './fpl'
 
 const CATALOGUE_TTL_MS = 30 * 60 * 1000
@@ -122,13 +123,18 @@ export async function getLiveStats(gameweek: number) {
   return inflight
 }
 
-export async function getSquad(managerId: number, gameweek: number): Promise<FplSquadView> {
-  const player = getPlayer(managerId)
-  if (!player.fplId) {
-    return emptySquad(player.id, 0, player.name, gameweek)
+export async function getSquadByEntry(input: {
+  managerId: number
+  fplId: number
+  name: string
+  gameweek: number
+}): Promise<FplSquadView> {
+  const { managerId, fplId, name, gameweek } = input
+  if (!fplId) {
+    return emptySquad(managerId, 0, name, gameweek)
   }
 
-  const key = `${managerId}:${gameweek}`
+  const key = `entry:${fplId}:${gameweek}`
   const cached = squadCache.get(key)
   if (isFresh(cached, SQUAD_TTL_MS) && cached) return cached.data
 
@@ -138,14 +144,15 @@ export async function getSquad(managerId: number, gameweek: number): Promise<Fpl
       getBootstrapCatalogue(),
       getLiveStats(gameweek),
       getGameweekFixtures(gameweek),
-      fplFetch<FplPicksResponse>(`/entry/${player.fplId}/event/${gameweek}/picks/`).catch(() => null),
-      fplFetch<FplManagerResponse>(`/entry/${player.fplId}/`).catch(() => null),
+      fplFetch<FplPicksResponse>(`/entry/${fplId}/event/${gameweek}/picks/`).catch(() => null),
+      fplFetch<FplManagerResponse>(`/entry/${fplId}/`).catch(() => null),
+      fplFetch<FplTransferResponse[]>(`/entry/${fplId}/transfers/`).catch(() => []),
     ])
-      .then(([catalogue, live, fixtures, payload, manager]) => {
+      .then(([catalogue, live, fixtures, payload, manager, transfers]) => {
         const data = hydrateSquad({
-          managerId: player.id,
-          fplId: player.fplId,
-          name: player.name,
+          managerId,
+          fplId,
+          name,
           teamName: manager?.name ?? null,
           gameweek,
           payload,
@@ -153,10 +160,11 @@ export async function getSquad(managerId: number, gameweek: number): Promise<Fpl
           live,
           fixtures: indexClubFixtures(fixtures, catalogue.teams),
         })
+        data.moves = squadMovesFromTransfers(transfers, gameweek, catalogue.players)
         squadCache.set(key, { at: Date.now(), data })
         return data
       })
-      .catch(() => cached?.data ?? emptySquad(player.id, player.fplId, player.name, gameweek))
+      .catch(() => cached?.data ?? emptySquad(managerId, fplId, name, gameweek))
       .finally(() => {
         squadInflight.delete(key)
       })
@@ -164,4 +172,14 @@ export async function getSquad(managerId: number, gameweek: number): Promise<Fpl
   }
 
   return inflight
+}
+
+export async function getSquad(managerId: number, gameweek: number): Promise<FplSquadView> {
+  const player = getPlayer(managerId)
+  return getSquadByEntry({
+    managerId: player.id,
+    fplId: player.fplId,
+    name: player.name,
+    gameweek,
+  })
 }

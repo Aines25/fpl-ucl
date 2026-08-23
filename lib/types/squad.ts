@@ -46,6 +46,15 @@ export interface SquadSlot {
   fixture: ClubFixture | null
 }
 
+export interface SquadMove {
+  inId: number
+  outId: number
+  inName: string
+  outName: string
+  inCost: number
+  outCost: number
+}
+
 export interface FplSquadView {
   managerId: number
   fplId: number
@@ -57,6 +66,7 @@ export interface FplSquadView {
   transferCost: number
   netPoints: number
   transfers: number
+  moves: SquadMove[]
   overallRank: number | null
   eventRank: number | null
   totalPoints: number | null

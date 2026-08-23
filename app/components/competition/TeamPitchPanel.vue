@@ -21,6 +21,7 @@ withDefaults(defineProps<{
     </template>
     <template v-else>
       <TeamStatsBar v-if="squad" :squad="squad" />
+      <TeamTransfers v-if="squad" :squad="squad" />
       <PitchView :squad="squad" :size="size" />
     </template>
   </div>

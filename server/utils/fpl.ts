@@ -81,6 +81,16 @@ export interface FplManagerResponse {
   player_last_name?: string
 }
 
+export interface FplTransferResponse {
+  element_in?: number
+  element_out?: number
+  element_in_cost?: number
+  element_out_cost?: number
+  entry?: number
+  event?: number
+  time?: string
+}
+
 export interface FplClassicLeagueResponse {
   league?: {
     id: number

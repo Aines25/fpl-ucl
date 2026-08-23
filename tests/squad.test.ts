@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   chipLabel,
   competitionChipAdjustment,
+  emptySquad,
   formationFromTypes,
   formatTeamValue,
   formatTransfers,
   hydrateSquad,
+  squadMovesFromTransfers,
 } from '../lib/engine/squad'
 import type { CataloguePlayer, LivePlayerStats } from '../lib/types/squad'
 
@@ -179,5 +181,40 @@ describe('squad helpers', () => {
 
     expect(squad.starters[0]?.fixture?.opponent).toBe('ARS')
     expect(squad.starters[0]?.fixture?.started).toBe(false)
+  })
+
+  it('starts with no transfer moves', () => {
+    expect(emptySquad(16, 12878, 'Christian Smith-Rose', 1).moves).toEqual([])
+  })
+
+  it('maps this gameweek transfers onto catalogue names', () => {
+    expect(squadMovesFromTransfers([
+      { element_in: 9, element_out: 10, element_in_cost: 145, element_out_cost: 90, event: 2 },
+      { element_in: 5, element_out: 8, element_in_cost: 100, element_out_cost: 70, event: 1 },
+    ], 2, catalogue)).toEqual([
+      {
+        inId: 9,
+        outId: 10,
+        inName: 'Haaland',
+        outName: 'Watkins',
+        inCost: 145,
+        outCost: 90,
+      },
+    ])
+  })
+
+  it('falls back to Unknown when a transferred player is missing', () => {
+    expect(squadMovesFromTransfers([
+      { element_in: 99, element_out: 10, event: 1 },
+    ], 1, catalogue)).toEqual([
+      {
+        inId: 99,
+        outId: 10,
+        inName: 'Unknown',
+        outName: 'Watkins',
+        inCost: 0,
+        outCost: 0,
+      },
+    ])
   })
 })

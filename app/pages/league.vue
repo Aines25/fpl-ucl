@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Minus } from '@lucide/vue'
+import { ArrowDown, ArrowUp, ChevronDown, Minus } from '@lucide/vue'
 import {
   Table,
   TableBody,
@@ -10,6 +10,11 @@ import {
 } from '@/components/ui/table'
 
 const { league, status } = useLeague()
+const { snapshot } = useCompetition()
+
+const expandedEntryId = ref<number | null>(null)
+const gameweek = computed(() => snapshot.value?.currentGameweek ?? 1)
+const { squad, loading } = useEntrySquad(expandedEntryId, gameweek)
 
 useHead({
   title: 'League · Champions League',
@@ -24,6 +29,17 @@ function movement(rank: number, lastRank: number | null) {
   if (!lastRank) return 0
   return lastRank - rank
 }
+
+function toggleRow(entryId: number) {
+  expandedEntryId.value = expandedEntryId.value === entryId ? null : entryId
+}
+
+function onRowKeydown(event: KeyboardEvent, entryId: number) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    toggleRow(entryId)
+  }
+}
 </script>
 
 <template>
@@ -34,7 +50,7 @@ function movement(rank: number, lastRank: number | null) {
     />
 
     <p class="mb-6 max-w-2xl text-silver">
-      The overall mini-league. Separate from the Champions League groups, every manager appears here, including those not in the tournament.
+      The overall mini-league. Separate from the Champions League groups, every manager appears here, including those not in the tournament. Click a row to open their squad, transfers and pitch without leaving the table.
     </p>
 
     <p v-if="status === 'pending' && !league" class="font-stats text-silver uppercase tracking-kicker">
@@ -55,58 +71,85 @@ function movement(rank: number, lastRank: number | null) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow
-            v-for="row in league?.standings ?? []"
-            :key="row.entryId"
-            :class="[
-              'border-cyan/10',
-              row.competitionPlayerId ? 'bg-star/8' : '',
-            ]"
-          >
-            <TableCell class="text-silver">{{ row.rank }}</TableCell>
-            <TableCell class="text-center">
-              <ArrowUp
-                v-if="movement(row.rank, row.lastRank) > 0"
-                class="mx-auto size-3.5 text-final"
-              />
-              <ArrowDown
-                v-else-if="movement(row.rank, row.lastRank) < 0"
-                class="mx-auto size-3.5 text-live"
-              />
-              <Minus v-else class="mx-auto size-3.5 text-silver-dim" />
-            </TableCell>
-            <TableCell class="font-medium text-white">
-              <NuxtLink
-                v-if="row.competitionPlayerId"
-                :to="`/team/${row.competitionPlayerId}`"
-                class="hover:text-cyan"
-              >
-                {{ row.playerName }}
-              </NuxtLink>
-              <span v-else>{{ row.playerName }}</span>
-              <span
-                v-if="row.competitionPlayerId"
-                class="ml-2 rounded-sm border border-star/40 bg-star/15 px-1.5 py-0.5 font-stats text-kicker tracking-kicker text-star uppercase"
-              >
-                UCL
-              </span>
-            </TableCell>
-            <TableCell class="hidden text-silver sm:table-cell">
-              {{ row.entryName }}
-            </TableCell>
-            <TableCell class="whitespace-normal text-white">
-              <p>
-                {{ row.captain ?? '—' }}
-                <span class="ml-1 font-stats text-kicker tracking-kicker text-cyan uppercase">C</span>
-              </p>
-              <p class="text-silver">
-                {{ row.viceCaptain ?? '—' }}
-                <span class="ml-1 font-stats text-kicker tracking-kicker text-silver-dim uppercase">V</span>
-              </p>
-            </TableCell>
-            <TableCell class="text-right text-white">{{ row.eventTotal }}</TableCell>
-            <TableCell class="text-right text-star">{{ row.total }}</TableCell>
-          </TableRow>
+          <template v-for="row in league?.standings ?? []" :key="row.entryId">
+            <TableRow
+              :class="[
+                'cursor-pointer border-cyan/10',
+                row.competitionPlayerId ? 'bg-star/8' : '',
+                expandedEntryId === row.entryId ? 'bg-cyan/10' : '',
+              ]"
+              role="button"
+              tabindex="0"
+              :aria-expanded="expandedEntryId === row.entryId"
+              @click="toggleRow(row.entryId)"
+              @keydown="onRowKeydown($event, row.entryId)"
+            >
+              <TableCell class="text-silver">{{ row.rank }}</TableCell>
+              <TableCell class="text-center">
+                <ArrowUp
+                  v-if="movement(row.rank, row.lastRank) > 0"
+                  class="mx-auto size-3.5 text-final"
+                />
+                <ArrowDown
+                  v-else-if="movement(row.rank, row.lastRank) < 0"
+                  class="mx-auto size-3.5 text-live"
+                />
+                <Minus v-else class="mx-auto size-3.5 text-silver-dim" />
+              </TableCell>
+              <TableCell class="font-medium text-white">
+                <span class="inline-flex items-center gap-2">
+                  {{ row.playerName }}
+                  <span
+                    v-if="row.competitionPlayerId"
+                    class="rounded-sm border border-star/40 bg-star/15 px-1.5 py-0.5 font-stats text-kicker tracking-kicker text-star uppercase"
+                  >
+                    UCL
+                  </span>
+                  <ChevronDown
+                    class="size-3.5 text-silver-dim transition-transform"
+                    :class="expandedEntryId === row.entryId ? 'rotate-180 text-cyan' : ''"
+                  />
+                </span>
+              </TableCell>
+              <TableCell class="hidden text-silver sm:table-cell">
+                {{ row.entryName }}
+              </TableCell>
+              <TableCell class="whitespace-normal text-white">
+                <p>
+                  {{ row.captain ?? '—' }}
+                  <span class="ml-1 font-stats text-kicker tracking-kicker text-cyan uppercase">C</span>
+                </p>
+                <p class="text-silver">
+                  {{ row.viceCaptain ?? '—' }}
+                  <span class="ml-1 font-stats text-kicker tracking-kicker text-silver-dim uppercase">V</span>
+                </p>
+              </TableCell>
+              <TableCell class="text-right text-white">{{ row.eventTotal }}</TableCell>
+              <TableCell class="text-right text-star">{{ row.total }}</TableCell>
+            </TableRow>
+            <TableRow
+              v-if="expandedEntryId === row.entryId"
+              class="border-cyan/10 hover:bg-transparent"
+            >
+              <TableCell colspan="7" class="whitespace-normal p-0 align-top">
+                <div class="animate-in fade-in slide-in-from-top-2 space-y-3 bg-navy-900/60 p-4 duration-200">
+                  <TeamPitchPanel
+                    :squad="squad"
+                    :loading="loading"
+                    size="sm"
+                  />
+                  <NuxtLink
+                    v-if="row.competitionPlayerId"
+                    :to="`/team/${row.competitionPlayerId}`"
+                    class="inline-flex font-stats text-kicker tracking-kicker text-cyan uppercase hover:text-white"
+                    @click.stop
+                  >
+                    Open team page
+                  </NuxtLink>
+                </div>
+              </TableCell>
+            </TableRow>
+          </template>
         </TableBody>
       </Table>
     </div>

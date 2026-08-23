@@ -30,5 +30,6 @@ export type {
   ElementType,
   FplSquadView,
   LivePlayerStats,
+  SquadMove,
   SquadSlot,
 } from './squad'

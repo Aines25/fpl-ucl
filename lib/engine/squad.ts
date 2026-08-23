@@ -1,4 +1,4 @@
-import type { CataloguePlayer, ClubFixture, ElementType, FplSquadView, LivePlayerStats, SquadSlot } from '../types/squad'
+import type { CataloguePlayer, ClubFixture, ElementType, FplSquadView, LivePlayerStats, SquadMove, SquadSlot } from '../types/squad'
 
 export interface SquadPick {
   element: number
@@ -108,6 +108,7 @@ export function emptySquad(
     transferCost: 0,
     netPoints: 0,
     transfers: 0,
+    moves: [],
     overallRank: null,
     eventRank: null,
     totalPoints: null,
@@ -200,6 +201,7 @@ export function hydrateSquad(input: {
     transferCost,
     netPoints: points - transferCost,
     transfers: history?.event_transfers ?? 0,
+    moves: [],
     overallRank: history?.overall_rank ?? null,
     eventRank: history?.rank ?? null,
     totalPoints: history?.total_points ?? null,
@@ -211,6 +213,35 @@ export function hydrateSquad(input: {
     starters,
     bench,
   }
+}
+
+export interface TransferRecord {
+  element_in?: number
+  element_out?: number
+  element_in_cost?: number
+  element_out_cost?: number
+  event?: number
+}
+
+export function squadMovesFromTransfers(
+  transfers: TransferRecord[] | null | undefined,
+  gameweek: number,
+  catalogue: Map<number, CataloguePlayer>,
+): SquadMove[] {
+  return (transfers ?? [])
+    .filter((transfer) => transfer.event === gameweek)
+    .map((transfer) => {
+      const inId = transfer.element_in ?? 0
+      const outId = transfer.element_out ?? 0
+      return {
+        inId,
+        outId,
+        inName: catalogue.get(inId)?.webName ?? 'Unknown',
+        outName: catalogue.get(outId)?.webName ?? 'Unknown',
+        inCost: transfer.element_in_cost ?? 0,
+        outCost: transfer.element_out_cost ?? 0,
+      }
+    })
 }
 
 export function groupStartersByLine(starters: SquadSlot[]) {
