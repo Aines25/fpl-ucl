@@ -2,20 +2,59 @@
 import { RefreshCw } from '@lucide/vue'
 import { competition } from '../../../data/competition'
 
+const MIN_VISIBLE_MS = 500
+const UPDATED_MS = 1800
+
 const { snapshot } = useCompetition()
 const refreshing = ref(false)
+const justUpdated = ref(false)
+
+let updatedTimer: ReturnType<typeof setTimeout> | undefined
+
+const statusLabel = computed(() => {
+  if (refreshing.value)
+    return 'Refreshing'
+  if (justUpdated.value)
+    return 'Updated'
+  return snapshot.value?.currentLabel ?? 'Matchday 1'
+})
 
 async function refresh() {
   if (refreshing.value)
     return
+
+  justUpdated.value = false
+  if (updatedTimer) {
+    clearTimeout(updatedTimer)
+    updatedTimer = undefined
+  }
+
   refreshing.value = true
+  const started = Date.now()
+  let succeeded = false
   try {
     await refreshNuxtData()
+    succeeded = true
   }
   finally {
+    const remaining = MIN_VISIBLE_MS - (Date.now() - started)
+    if (remaining > 0)
+      await new Promise(resolve => setTimeout(resolve, remaining))
     refreshing.value = false
+    if (succeeded) {
+      justUpdated.value = true
+      updatedTimer = setTimeout(() => {
+        justUpdated.value = false
+        updatedTimer = undefined
+      }, UPDATED_MS)
+    }
   }
 }
+
+onUnmounted(() => {
+  if (updatedTimer)
+    clearTimeout(updatedTimer)
+})
 </script>
 
 <template>
@@ -32,23 +71,74 @@ async function refresh() {
           </h1>
         </div>
       </NuxtLink>
-      <div class="hidden text-right sm:block">
-        <p class="font-stats text-kicker tracking-kicker text-silver uppercase">
-          {{ snapshot?.currentLabel ?? 'Matchday 1' }}
+      <div class="shrink-0 text-right">
+        <p
+          class="font-stats text-kicker tracking-kicker uppercase"
+          :class="refreshing || justUpdated ? 'text-cyan' : 'hidden text-silver sm:block'"
+          aria-live="polite"
+        >
+          {{ statusLabel }}
         </p>
-        <p class="font-stats text-sm text-white">
+        <p class="hidden font-stats text-sm text-white sm:block">
           GW {{ snapshot?.currentGameweek ?? 1 }}
         </p>
       </div>
       <button
         type="button"
-        class="shrink-0 p-2.5 text-silver transition-colors hover:text-white"
-        aria-label="Refresh"
+        class="shrink-0 p-2.5 transition-colors disabled:pointer-events-none"
+        :class="refreshing || justUpdated ? 'text-cyan' : 'text-silver hover:text-white'"
+        :aria-label="refreshing ? 'Refreshing' : justUpdated ? 'Updated' : 'Refresh'"
+        :aria-busy="refreshing"
         :disabled="refreshing"
         @click="refresh"
       >
         <RefreshCw :class="['size-4', refreshing && 'animate-spin']" />
       </button>
     </div>
+    <div
+      class="refresh-bar pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-cyan shadow-[0_0_8px_var(--ucl-cyan)]"
+      :class="{
+        'refresh-bar--active': refreshing,
+        'refresh-bar--done': justUpdated,
+      }"
+      aria-hidden="true"
+    />
   </header>
 </template>
+
+<style scoped>
+.refresh-bar {
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.refresh-bar--active {
+  animation: refresh-grow 0.5s ease-out forwards;
+}
+
+.refresh-bar--done {
+  animation: refresh-fade 0.35s ease-out forwards;
+}
+
+@keyframes refresh-grow {
+  from {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes refresh-fade {
+  from {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+</style>
