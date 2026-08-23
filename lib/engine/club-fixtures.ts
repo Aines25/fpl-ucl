@@ -6,6 +6,29 @@ export interface ClubFixtureInput {
   kickoff_time: string | null
   started?: boolean | null
   finished?: boolean | null
+  finished_provisional?: boolean | null
+}
+
+export function fixtureIsComplete(fixture: Pick<ClubFixtureInput, 'finished' | 'finished_provisional'>) {
+  return Boolean(fixture.finished || fixture.finished_provisional)
+}
+
+export function indexTeamFinished(fixtures: ClubFixtureInput[]) {
+  const byTeam = new Map<number, ClubFixtureInput[]>()
+  for (const fixture of fixtures) {
+    const home = byTeam.get(fixture.team_h) ?? []
+    home.push(fixture)
+    byTeam.set(fixture.team_h, home)
+    const away = byTeam.get(fixture.team_a) ?? []
+    away.push(fixture)
+    byTeam.set(fixture.team_a, away)
+  }
+
+  const finished = new Map<number, boolean>()
+  for (const [teamId, matches] of byTeam) {
+    finished.set(teamId, matches.every((match) => fixtureIsComplete(match)))
+  }
+  return finished
 }
 
 export function isPendingFixture(fixture: ClubFixture | null | undefined) {

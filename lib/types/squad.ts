@@ -12,6 +12,17 @@ export interface CataloguePlayer {
 export interface LivePlayerStats {
   minutes: number
   points: number
+  goalsScored?: number
+  assists?: number
+  cleanSheets?: number
+  goalsConceded?: number
+  ownGoals?: number
+  penaltiesSaved?: number
+  penaltiesMissed?: number
+  yellowCards?: number
+  redCards?: number
+  saves?: number
+  bonus?: number
 }
 
 export interface ClubInfo {

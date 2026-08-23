@@ -23,12 +23,31 @@ export {
 } from './squad'
 export { alignArchivedScores, archiveIsComplete } from './archive'
 export {
+  fixtureIsComplete,
   formatFixtureKickoff,
   formatUpcomingFixture,
   indexClubFixtures,
+  indexTeamFinished,
   isPendingFixture,
   pickClubFixture,
 } from './club-fixtures'
+export {
+  applyAutoSubs,
+  applyCaptainMultiplier,
+  eventsFromLiveStats,
+  FEED_PAGE_SIZE,
+  feedDisplayPool,
+  formatFeedTime,
+  paginateFeed,
+  liveCountingPicks,
+  liveGameweekPoints,
+  liveStandingTotals,
+  mergeFeedEvents,
+  ownershipFromPicks,
+  playerMatchState,
+  rankLiveStandings,
+  stampFeedEvents,
+} from './live'
 export { compareSquads, competitionMultiplier } from './differentials'
 export { countdownParts, currentLiveEvent, matchdayForEvent, nextDeadlineEvent } from './deadline'
 export { scenariosForGroup, remainingGroupFixtures } from './scenarios'

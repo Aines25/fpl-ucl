@@ -1,0 +1,17 @@
+import { getLiveLeague } from '../../../utils/live-league'
+import { getBootstrap, maxAgeForEvents } from '../../../utils/scores'
+
+export default defineEventHandler(async (event) => {
+  const table = await getLiveLeague()
+  let maxAge = 30
+  try {
+    const bootstrap = await getBootstrap()
+    const gameweek = bootstrap.current?.id ?? table.gameweek
+    maxAge = Math.min(60, maxAgeForEvents(bootstrap.events, [gameweek]))
+  }
+  catch {
+    maxAge = 30
+  }
+  setHeader(event, 'cache-control', `public, s-maxage=${maxAge}, stale-while-revalidate=120`)
+  return table
+})

@@ -20,7 +20,12 @@ export type {
 
 export type {
   ClassicLeagueTable,
+  LeagueEntryPicks,
+  LeaguePick,
   LeagueStandingRow,
+  LiveFeedEvent,
+  LiveLeagueTable,
+  LiveOwner,
 } from './league'
 
 export type {

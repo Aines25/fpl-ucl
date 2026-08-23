@@ -82,6 +82,10 @@ export async function getPlayerCatalogue() {
   return (await getBootstrapCatalogue()).players
 }
 
+export async function getClubCatalogue() {
+  return (await getBootstrapCatalogue()).teams
+}
+
 export async function getGameweekFixtures(gameweek: number) {
   const cached = fixtureCache.get(gameweek)
   if (isFresh(cached, LIVE_TTL_MS) && cached) return cached.data
@@ -116,6 +120,17 @@ export async function getLiveStats(gameweek: number) {
           data.set(element.id, {
             minutes: element.stats?.minutes ?? 0,
             points: element.stats?.total_points ?? 0,
+            goalsScored: element.stats?.goals_scored ?? 0,
+            assists: element.stats?.assists ?? 0,
+            cleanSheets: element.stats?.clean_sheets ?? 0,
+            goalsConceded: element.stats?.goals_conceded ?? 0,
+            ownGoals: element.stats?.own_goals ?? 0,
+            penaltiesSaved: element.stats?.penalties_saved ?? 0,
+            penaltiesMissed: element.stats?.penalties_missed ?? 0,
+            yellowCards: element.stats?.yellow_cards ?? 0,
+            redCards: element.stats?.red_cards ?? 0,
+            saves: element.stats?.saves ?? 0,
+            bonus: element.stats?.bonus ?? 0,
           })
         }
         liveCache.set(gameweek, { at: Date.now(), data })

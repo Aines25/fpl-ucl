@@ -33,7 +33,7 @@ describe('normaliseLeagueStanding', () => {
 describe('extrasFromPicks', () => {
   it('attaches this gameweek transfer count', () => {
     expect(extrasFromPicks({
-      entry_history: { event_transfers: 2 },
+      entry_history: { event_transfers: 2, event_transfers_cost: 4 },
       picks: [
         { element: 1, position: 1, multiplier: 2, is_captain: true, is_vice_captain: false },
         { element: 2, position: 2, multiplier: 1, is_captain: false, is_vice_captain: true },
@@ -42,7 +42,12 @@ describe('extrasFromPicks', () => {
       captain: 'Haaland',
       viceCaptain: 'Salah',
       transfers: 2,
+      transferCost: 4,
       chip: null,
+      picks: [
+        { element: 1, position: 1, multiplier: 2, isCaptain: true, isViceCaptain: false },
+        { element: 2, position: 2, multiplier: 1, isCaptain: false, isViceCaptain: true },
+      ],
     })
   })
 
@@ -55,7 +60,9 @@ describe('extrasFromPicks', () => {
       captain: null,
       viceCaptain: null,
       transfers: 0,
+      transferCost: 0,
       chip: '3xc',
+      picks: [],
     })
   })
 })

@@ -1,7 +1,7 @@
 import { competition } from '../../data/competition'
 import { players } from '../../data/players'
 import type { FplEventState } from '../../lib/types/competition'
-import type { ClassicLeagueTable, LeagueStandingRow } from '../../lib/types/league'
+import type { ClassicLeagueTable, LeagueEntryPicks, LeagueStandingRow } from '../../lib/types/league'
 import { isFresh, readSharedCache, writeSharedCache, type Timed } from './cache'
 import { cacheMaxAge, fplFetch, type FplClassicLeagueResponse, type FplPicksResponse } from './fpl'
 import { getBootstrap } from './scores'
@@ -10,14 +10,12 @@ import { getPlayerCatalogue } from './squad'
 const LEAGUE_TTL_MS = 60_000
 const MAX_PAGES = 6
 const CAPTAIN_BATCH = 10
-const CAPTAIN_FETCH_LIMIT = 40
 const CAPTAIN_PERSIST_SECONDS = 60 * 60 * 12
-
-type LeaguePickExtras = Pick<LeagueStandingRow, 'captain' | 'viceCaptain' | 'transfers' | 'chip'>
+const PICKS_CACHE_VERSION = 'v4'
 
 let leagueMemory: Timed<ClassicLeagueTable> | null = null
 let leagueInflight: Promise<ClassicLeagueTable> | null = null
-const captainMemory = new Map<string, LeaguePickExtras>()
+const captainMemory = new Map<string, LeagueEntryPicks>()
 const captainSharedHydrated = new Set<number>()
 
 function playerByFplId() {
@@ -38,7 +36,7 @@ export function captainsAreLocked(event: FplEventState | undefined, now = Date.n
 export function captainsFromPicks(
   picks: FplPicksResponse['picks'],
   names: Map<number, string>,
-): Pick<LeaguePickExtras, 'captain' | 'viceCaptain'> {
+): Pick<LeagueEntryPicks, 'captain' | 'viceCaptain'> {
   let captain: string | null = null
   let viceCaptain: string | null = null
   for (const pick of picks ?? []) {
@@ -51,20 +49,28 @@ export function captainsFromPicks(
 export function extrasFromPicks(
   payload: FplPicksResponse | null | undefined,
   names: Map<number, string>,
-): LeaguePickExtras {
+): LeagueEntryPicks {
   return {
     ...captainsFromPicks(payload?.picks, names),
     transfers: payload?.entry_history?.event_transfers ?? 0,
+    transferCost: payload?.entry_history?.event_transfers_cost ?? 0,
     chip: payload?.active_chip ?? null,
+    picks: (payload?.picks ?? []).map((pick) => ({
+      element: pick.element,
+      position: pick.position,
+      multiplier: pick.multiplier,
+      isCaptain: pick.is_captain,
+      isViceCaptain: pick.is_vice_captain,
+    })),
   }
 }
 
-function extrasAreComplete(extras: LeaguePickExtras | undefined) {
-  return typeof extras?.transfers === 'number' && 'chip' in extras
+function extrasAreComplete(extras: LeagueEntryPicks | undefined) {
+  return Boolean(extras && Array.isArray(extras.picks) && typeof extras.transfers === 'number')
 }
 
 function leagueCaptainsComplete(standings: LeagueStandingRow[]) {
-  return standings.every((row) => row.entryId <= 0 || extrasAreComplete(row))
+  return standings.every((row) => row.entryId <= 0 || (typeof row.transfers === 'number' && 'chip' in row))
 }
 
 export function normaliseLeagueStanding(
@@ -88,9 +94,13 @@ export function normaliseLeagueStanding(
   }
 }
 
+function picksCacheKey(gameweek: number) {
+  return `fpl:league-picks:${PICKS_CACHE_VERSION}:${gameweek}`
+}
+
 async function hydrateCaptainMemory(gameweek: number) {
   if (captainSharedHydrated.has(gameweek)) return
-  const shared = await readSharedCache<Record<string, LeaguePickExtras>>(`fpl:league-picks:v3:${gameweek}`)
+  const shared = await readSharedCache<Record<string, LeagueEntryPicks>>(picksCacheKey(gameweek))
   if (shared?.data) {
     for (const [entryId, pair] of Object.entries(shared.data)) {
       captainMemory.set(captainKey(Number(entryId), gameweek), pair)
@@ -100,13 +110,13 @@ async function hydrateCaptainMemory(gameweek: number) {
 }
 
 async function persistCaptainMemory(gameweek: number) {
-  const data: Record<string, LeaguePickExtras> = {}
+  const data: Record<string, LeagueEntryPicks> = {}
   const suffix = `:${gameweek}`
   for (const [key, pair] of captainMemory) {
     if (!key.endsWith(suffix)) continue
     data[key.slice(0, -suffix.length)] = pair
   }
-  await writeSharedCache(`fpl:league-picks:v3:${gameweek}`, data, CAPTAIN_PERSIST_SECONDS)
+  await writeSharedCache(picksCacheKey(gameweek), data, CAPTAIN_PERSIST_SECONDS)
 }
 
 async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEventState | undefined) {
@@ -123,7 +133,7 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
     if (missing.length) {
       const catalogue = await getPlayerCatalogue()
       const names = new Map([...catalogue.values()].map((player) => [player.id, player.webName]))
-      const toFetch = missing.slice(0, CAPTAIN_FETCH_LIMIT)
+      const toFetch = missing
 
       for (let index = 0; index < toFetch.length; index += CAPTAIN_BATCH) {
         const batch = toFetch.slice(index, index + CAPTAIN_BATCH)
@@ -141,10 +151,31 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
     }
   }
 
-  return standings.map((row) => ({
-    ...row,
-    ...(captainMemory.get(captainKey(row.entryId, gameweek)) ?? { captain: null, viceCaptain: null, transfers: null, chip: null }),
-  }))
+  return standings.map((row) => {
+    const extras = captainMemory.get(captainKey(row.entryId, gameweek))
+    return {
+      ...row,
+      captain: extras?.captain ?? null,
+      viceCaptain: extras?.viceCaptain ?? null,
+      transfers: extras?.transfers ?? null,
+      chip: extras?.chip ?? null,
+    }
+  })
+}
+
+export async function getLeagueEntryPicks(
+  standings: LeagueStandingRow[],
+  event: FplEventState | undefined,
+) {
+  await attachLeagueCaptains(standings, event)
+  const gameweek = event?.id
+  const picks = new Map<number, LeagueEntryPicks>()
+  if (!gameweek) return picks
+  for (const row of standings) {
+    const extras = captainMemory.get(captainKey(row.entryId, gameweek))
+    if (extras) picks.set(row.entryId, extras)
+  }
+  return picks
 }
 
 async function fetchClassicLeague(leagueId: number): Promise<ClassicLeagueTable> {

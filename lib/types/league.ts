@@ -18,3 +18,53 @@ export interface ClassicLeagueTable {
   name: string
   standings: LeagueStandingRow[]
 }
+
+export interface LeaguePick {
+  element: number
+  position: number
+  multiplier: number
+  isCaptain: boolean
+  isViceCaptain: boolean
+}
+
+export interface LeagueEntryPicks {
+  captain: string | null
+  viceCaptain: string | null
+  transfers: number
+  transferCost: number
+  chip: string | null
+  picks: LeaguePick[]
+}
+
+export interface LiveOwner {
+  entryId: number
+  playerName: string
+  entryName: string
+  isCaptain: boolean
+  isViceCaptain: boolean
+  onBench: boolean
+}
+
+export interface LiveFeedEvent {
+  id: string
+  at: number
+  elementId: number
+  webName: string
+  teamShortName: string
+  identifier: string
+  label: string
+  points: number
+  occurrence: number
+  matchFinished?: boolean
+}
+
+export interface LiveLeagueTable {
+  leagueId: number
+  name: string
+  gameweek: number
+  updatedAt: number
+  picksComplete: boolean
+  standings: LeagueStandingRow[]
+  feed: LiveFeedEvent[]
+  ownersByPlayer: Record<number, LiveOwner[]>
+}

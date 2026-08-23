@@ -1,23 +1,20 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, ChevronDown, Minus } from '@lucide/vue'
-import { chipLabel } from '../../lib/engine/squad'
 import { activeCompetitionIds } from '../../lib/engine/qualification'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const { league, status } = useLeague()
-const { snapshot } = useCompetition()
+const { snapshot, isLive } = useCompetition()
 
-type MobileColumns = 'points' | 'picks'
+const tab = ref<'official' | 'live'>('official')
+const { live, feed, status: liveStatus } = useLiveLeague(computed(() => tab.value === 'live' || isLive.value))
 
+type ExpandedSource = 'official' | 'live'
+type LiveMobileView = 'points' | 'picks' | 'feed'
 const expandedEntryId = ref<number | null>(null)
-const mobileColumns = ref<MobileColumns>('points')
+const expandedSource = ref<ExpandedSource>('official')
+const liveMobileView = ref<LiveMobileView>('points')
+const liveTableColumns = computed(() => liveMobileView.value === 'feed' ? 'points' : liveMobileView.value)
+
 const gameweek = computed(() => snapshot.value?.currentGameweek ?? 1)
 const { squad, loading, error } = useEntrySquad(expandedEntryId, gameweek)
 const stillInUcl = computed(() => {
@@ -34,37 +31,18 @@ useSeoMeta({
   ogDescription: 'Overall FPL mini-league standings, including managers outside the Champions League groups.',
 })
 
-function movement(rank: number, lastRank: number | null) {
-  if (!lastRank) return 0
-  return lastRank - rank
-}
-
-function isStillInUcl(playerId: number | null) {
-  return Boolean(playerId && stillInUcl.value.has(playerId))
-}
-
-function toggleRow(entryId: number) {
-  if (expandedEntryId.value === entryId) {
+function toggleRow(entryId: number, source: ExpandedSource) {
+  if (expandedEntryId.value === entryId && expandedSource.value === source) {
     expandedEntryId.value = null
     return
   }
   expandedEntryId.value = entryId
+  expandedSource.value = source
 }
 
-function onRowKeydown(event: KeyboardEvent, entryId: number) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault()
-    toggleRow(entryId)
-  }
-}
-
-function mobileCol(view: MobileColumns) {
-  return mobileColumns.value === view ? '' : 'hidden sm:table-cell'
-}
-
-function rowChip(chip: string | null) {
-  return chipLabel(chip) ?? 'No chip used'
-}
+watch(tab, () => {
+  expandedEntryId.value = null
+})
 </script>
 
 <template>
@@ -75,147 +53,151 @@ function rowChip(chip: string | null) {
     />
 
     <p class="mb-6 max-w-2xl text-silver">
-      The overall mini-league. Separate from the Champions League groups, every manager appears here, including those not in the tournament. Click a row to open their squad, transfers and pitch without leaving the table.
+      The overall mini-league. Official is FPL’s confirmed table. Live recalculates ranks from live player points while matches are on, and the feed lists every FPL event as it lands.
     </p>
 
     <p v-if="status === 'pending' && !league" class="font-stats text-silver uppercase tracking-kicker">
       Loading league…
     </p>
 
-    <template v-else>
-      <p class="mb-3 flex items-center gap-2 font-stats text-kicker tracking-kicker text-silver uppercase">
+    <Tabs v-else v-model="tab" class="gap-4">
+      <TabsList class="h-auto w-full grid grid-cols-2 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 sm:w-fit">
+        <TabsTrigger
+          value="official"
+          class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          Official
+        </TabsTrigger>
+        <TabsTrigger
+          value="live"
+          class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          Live
+        </TabsTrigger>
+      </TabsList>
+
+      <p class="flex items-center gap-2 font-stats text-kicker tracking-kicker text-silver uppercase">
         <span class="inline-block size-3 rounded-sm bg-star/30 ring-1 ring-star/40" />
         Gold rows are still in the Champions League
       </p>
 
-      <div
-        class="mb-3 grid grid-cols-2 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 sm:hidden"
-        role="group"
-        aria-label="League columns"
-      >
-        <button
-          type="button"
-          class="rounded-sm px-2 py-1.5 font-stats text-kicker tracking-kicker uppercase"
-          :class="mobileColumns === 'points' ? 'bg-cyan/20 text-white' : 'text-silver'"
-          :aria-pressed="mobileColumns === 'points'"
-          @click="mobileColumns = 'points'"
+      <TabsContent value="official">
+        <LeagueStandingsTable
+          :standings="league?.standings ?? []"
+          :still-in-ucl="stillInUcl"
+          :expanded-entry-id="expandedSource === 'official' ? expandedEntryId : null"
+          @toggle="toggleRow($event, 'official')"
         >
-          GW / Total
-        </button>
-        <button
-          type="button"
-          class="rounded-sm px-2 py-1.5 font-stats text-kicker tracking-kicker uppercase"
-          :class="mobileColumns === 'picks' ? 'bg-cyan/20 text-white' : 'text-silver'"
-          :aria-pressed="mobileColumns === 'picks'"
-          @click="mobileColumns = 'picks'"
-        >
-          Captains / Transfers
-        </button>
-      </div>
+          <template #expanded="{ row }">
+            <TeamPitchPanel
+              :squad="squad"
+              :loading="loading"
+              :error="error"
+              scoring="official"
+              layout="split"
+              size="sm"
+            />
+            <NuxtLink
+              v-if="row.competitionPlayerId"
+              :to="`/team/${row.competitionPlayerId}`"
+              class="inline-flex font-stats text-kicker tracking-kicker text-cyan uppercase hover:text-white"
+              @click.stop
+            >
+              Open team page
+            </NuxtLink>
+          </template>
+        </LeagueStandingsTable>
+      </TabsContent>
 
-      <div class="overflow-hidden rounded-md border border-cyan/20 bg-navy-800/80 shadow-card">
-        <Table class="font-stats text-label">
-          <TableHeader>
-            <TableRow class="border-cyan/15 hover:bg-transparent">
-              <TableHead class="w-10 text-silver">#</TableHead>
-              <TableHead :class="['w-8 text-silver', mobileCol('points')]" />
-              <TableHead class="text-silver">Manager</TableHead>
-              <TableHead :class="['text-silver', mobileCol('picks')]">Captains</TableHead>
-              <TableHead :class="['text-right text-silver', mobileCol('picks')]">Transfers</TableHead>
-              <TableHead :class="['text-right text-silver', mobileCol('points')]">GW</TableHead>
-              <TableHead :class="['text-right text-silver', mobileCol('points')]">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <template v-for="row in league?.standings ?? []" :key="row.entryId">
-              <TableRow
-                :class="[
-                  'cursor-pointer border-cyan/10',
-                  isStillInUcl(row.competitionPlayerId) ? 'bg-star/8' : '',
-                  expandedEntryId === row.entryId ? 'bg-cyan/10' : '',
-                ]"
-                role="button"
-                tabindex="0"
-                :aria-expanded="expandedEntryId === row.entryId"
-                @click="toggleRow(row.entryId)"
-                @keydown="onRowKeydown($event, row.entryId)"
+      <TabsContent value="live">
+        <p v-if="liveStatus === 'pending' && !live" class="mb-4 font-stats text-silver uppercase tracking-kicker">
+          Calculating live scores…
+        </p>
+        <p v-else-if="liveStatus === 'error' && !live" class="mb-4 text-sm text-live">
+          Could not load live scores. Try again in a moment.
+        </p>
+        <p v-else-if="live && !live.picksComplete" class="mb-4 text-sm text-silver">
+          Still fetching a few squads. Ranks will settle as those picks arrive.
+        </p>
+        <p v-else class="mb-4 text-sm text-silver">
+          Ranks use live FPL points, including provisional auto-subs. Arrows are movement versus the official table.
+        </p>
+
+        <div
+          class="mb-3 grid grid-cols-3 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 lg:hidden"
+          role="group"
+          aria-label="Live league view"
+        >
+          <button
+            type="button"
+            class="rounded-sm px-2 py-1.5 font-stats text-kicker tracking-kicker uppercase"
+            :class="liveMobileView === 'points' ? 'bg-cyan/20 text-white' : 'text-silver'"
+            :aria-pressed="liveMobileView === 'points'"
+            @click="liveMobileView = 'points'"
+          >
+            GW / Total
+          </button>
+          <button
+            type="button"
+            class="rounded-sm px-2 py-1.5 font-stats text-kicker tracking-kicker uppercase"
+            :class="liveMobileView === 'picks' ? 'bg-cyan/20 text-white' : 'text-silver'"
+            :aria-pressed="liveMobileView === 'picks'"
+            @click="liveMobileView = 'picks'"
+          >
+            Captains
+          </button>
+          <button
+            type="button"
+            class="rounded-sm px-2 py-1.5 font-stats text-kicker tracking-kicker uppercase"
+            :class="liveMobileView === 'feed' ? 'bg-cyan/20 text-white' : 'text-silver'"
+            :aria-pressed="liveMobileView === 'feed'"
+            @click="liveMobileView = 'feed'"
+          >
+            Feed
+          </button>
+        </div>
+
+        <div v-if="live" class="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <LeagueStandingsTable
+            :class="liveMobileView === 'feed' ? 'hidden lg:block' : ''"
+            :standings="live?.standings ?? []"
+            :still-in-ucl="stillInUcl"
+            :expanded-entry-id="expandedSource === 'live' ? expandedEntryId : null"
+            hide-mobile-toggle
+            :mobile-columns="liveTableColumns"
+            @toggle="toggleRow($event, 'live')"
+          >
+            <template #expanded="{ row }">
+              <TeamPitchPanel
+                :squad="squad"
+                :loading="loading"
+                :error="error"
+                scoring="official"
+                layout="split"
+                size="sm"
+              />
+              <NuxtLink
+                v-if="row.competitionPlayerId"
+                :to="`/team/${row.competitionPlayerId}`"
+                class="inline-flex font-stats text-kicker tracking-kicker text-cyan uppercase hover:text-white"
+                @click.stop
               >
-                <TableCell class="text-silver">{{ row.rank }}</TableCell>
-                <TableCell :class="['text-center', mobileCol('points')]">
-                  <ArrowUp
-                    v-if="movement(row.rank, row.lastRank) > 0"
-                    class="mx-auto size-3.5 text-final"
-                  />
-                  <ArrowDown
-                    v-else-if="movement(row.rank, row.lastRank) < 0"
-                    class="mx-auto size-3.5 text-live"
-                  />
-                  <Minus v-else class="mx-auto size-3.5 text-silver-dim" />
-                </TableCell>
-                <TableCell class="max-w-40 min-w-0 whitespace-normal font-medium text-white sm:max-w-none">
-                  <p class="truncate text-[11px] leading-tight font-normal text-silver">
-                    {{ row.entryName }}
-                  </p>
-                  <span class="inline-flex items-center gap-2">
-                    {{ row.playerName }}
-                    <ChevronDown
-                      class="size-3.5 text-silver-dim transition-transform"
-                      :class="expandedEntryId === row.entryId ? 'rotate-180 text-cyan' : ''"
-                    />
-                  </span>
-                  <p class="text-[11px] leading-tight font-normal text-silver-dim">
-                    {{ rowChip(row.chip) }}
-                  </p>
-                </TableCell>
-                <TableCell :class="['whitespace-normal text-white', mobileCol('picks')]">
-                  <p>
-                    {{ row.captain ?? '—' }}
-                    <span class="ml-1 font-stats text-kicker tracking-kicker text-cyan uppercase">C</span>
-                  </p>
-                  <p class="text-silver">
-                    {{ row.viceCaptain ?? '—' }}
-                    <span class="ml-1 font-stats text-kicker tracking-kicker text-silver-dim uppercase">V</span>
-                  </p>
-                </TableCell>
-                <TableCell :class="['text-right text-white', mobileCol('picks')]">
-                  {{ row.transfers ?? '—' }}
-                </TableCell>
-                <TableCell :class="['text-right text-white', mobileCol('points')]">
-                  {{ row.eventTotal }}
-                </TableCell>
-                <TableCell :class="['text-right text-star', mobileCol('points')]">
-                  {{ row.total }}
-                </TableCell>
-              </TableRow>
-              <TableRow
-                v-if="expandedEntryId === row.entryId"
-                class="border-cyan/10 hover:bg-transparent"
-              >
-                <TableCell colspan="7" class="whitespace-normal p-0 align-top">
-                  <div class="animate-in fade-in slide-in-from-top-2 space-y-3 bg-navy-900/60 p-4 duration-200">
-                    <TeamPitchPanel
-                      :squad="squad"
-                      :loading="loading"
-                      :error="error"
-                      scoring="official"
-                      layout="split"
-                      size="sm"
-                    />
-                    <NuxtLink
-                      v-if="row.competitionPlayerId"
-                      :to="`/team/${row.competitionPlayerId}`"
-                      class="inline-flex font-stats text-kicker tracking-kicker text-cyan uppercase hover:text-white"
-                      @click.stop
-                    >
-                      Open team page
-                    </NuxtLink>
-                  </div>
-                </TableCell>
-              </TableRow>
+                Open team page
+              </NuxtLink>
             </template>
-          </TableBody>
-        </Table>
-      </div>
-    </template>
+          </LeagueStandingsTable>
+
+          <div
+            :class="liveMobileView === 'feed' ? '' : 'hidden lg:block'"
+            class="lg:sticky lg:top-[calc(var(--spacing-header)+var(--spacing-nav)+1rem)] lg:h-[calc(100dvh-var(--spacing-header)-var(--spacing-nav)-2rem)]"
+          >
+            <LeagueLiveFeed
+              :events="feed"
+              :owners-by-player="live?.ownersByPlayer ?? {}"
+            />
+          </div>
+        </div>
+      </TabsContent>
+    </Tabs>
   </div>
 </template>

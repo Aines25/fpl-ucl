@@ -60,6 +60,17 @@ export interface FplLiveResponse {
     stats?: {
       minutes?: number
       total_points?: number
+      goals_scored?: number
+      assists?: number
+      clean_sheets?: number
+      goals_conceded?: number
+      own_goals?: number
+      penalties_saved?: number
+      penalties_missed?: number
+      yellow_cards?: number
+      red_cards?: number
+      saves?: number
+      bonus?: number
     }
   }>
 }
@@ -72,6 +83,7 @@ export interface FplFixtureResponse {
   team_a: number
   started: boolean | null
   finished: boolean
+  finished_provisional?: boolean
 }
 
 export interface FplManagerResponse {
