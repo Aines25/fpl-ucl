@@ -118,7 +118,7 @@ function rowChip(chip: string | null) {
           <TableHeader>
             <TableRow class="border-cyan/15 hover:bg-transparent">
               <TableHead class="w-10 text-silver">#</TableHead>
-              <TableHead class="w-8 text-silver" />
+              <TableHead :class="['w-8 text-silver', mobileCol('points')]" />
               <TableHead class="text-silver">Manager</TableHead>
               <TableHead :class="['text-silver', mobileCol('picks')]">Captains</TableHead>
               <TableHead :class="['text-right text-silver', mobileCol('picks')]">Transfers</TableHead>
@@ -141,7 +141,7 @@ function rowChip(chip: string | null) {
                 @keydown="onRowKeydown($event, row.entryId)"
               >
                 <TableCell class="text-silver">{{ row.rank }}</TableCell>
-                <TableCell class="text-center">
+                <TableCell :class="['text-center', mobileCol('points')]">
                   <ArrowUp
                     v-if="movement(row.rank, row.lastRank) > 0"
                     class="mx-auto size-3.5 text-final"
