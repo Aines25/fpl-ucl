@@ -23,6 +23,7 @@ export type {
   LeagueEntryPicks,
   LeaguePick,
   LeagueStandingRow,
+  LiveFeedBreakdownLine,
   LiveFeedEvent,
   LiveLeagueTable,
   LiveOwner,

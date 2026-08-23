@@ -30,6 +30,15 @@ function loadAll() {
 function pointsLabel(points: number) {
   return points > 0 ? `+${points} pts` : `${points} pts`
 }
+
+function gameweekPointsLabel(points: number) {
+  return `${points} pts this GW`
+}
+
+function breakdownLabel(line: { identifier: string, label: string, count: number }) {
+  if (line.count <= 1 || line.identifier === 'bonus') return line.label
+  return `${line.count}× ${line.label}`
+}
 </script>
 
 <template>
@@ -83,6 +92,29 @@ function pointsLabel(points: number) {
           v-if="expandedEventId === event.id"
           class="border-t border-cyan/10 bg-navy-900/60 px-4 py-3"
         >
+          <div class="mb-3">
+            <p
+              class="mb-1.5 text-right font-stats text-label"
+              :class="(event.gameweekPoints ?? 0) < 0 ? 'text-live' : 'text-final'"
+            >
+              {{ gameweekPointsLabel(event.gameweekPoints ?? 0) }}
+            </p>
+            <ul v-if="event.gameweekBreakdown?.length" class="space-y-1">
+              <li
+                v-for="line in event.gameweekBreakdown"
+                :key="line.identifier"
+                class="flex items-baseline justify-between gap-3 text-sm"
+              >
+                <span class="text-silver">{{ breakdownLabel(line) }}</span>
+                <span
+                  class="font-stats text-label"
+                  :class="line.points < 0 ? 'text-live' : 'text-final'"
+                >
+                  {{ pointsLabel(line.points) }}
+                </span>
+              </li>
+            </ul>
+          </div>
           <p class="mb-2 font-stats text-kicker tracking-kicker text-silver uppercase">
             Owned by {{ ownersFor(event.elementId).length }}
           </p>

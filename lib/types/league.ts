@@ -45,6 +45,13 @@ export interface LiveOwner {
   onBench: boolean
 }
 
+export interface LiveFeedBreakdownLine {
+  identifier: string
+  label: string
+  count: number
+  points: number
+}
+
 export interface LiveFeedEvent {
   id: string
   at: number
@@ -55,6 +62,8 @@ export interface LiveFeedEvent {
   label: string
   points: number
   occurrence: number
+  gameweekPoints?: number
+  gameweekBreakdown?: LiveFeedBreakdownLine[]
   matchFinished?: boolean
 }
 

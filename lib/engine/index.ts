@@ -35,6 +35,7 @@ export {
   applyAutoSubs,
   applyCaptainMultiplier,
   eventsFromLiveStats,
+  gameweekBreakdownFromStats,
   FEED_PAGE_SIZE,
   feedDisplayPool,
   formatFeedTime,

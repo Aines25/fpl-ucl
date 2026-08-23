@@ -3,6 +3,7 @@ import { indexTeamFinished } from '../lib/engine/club-fixtures'
 import {
   applyAutoSubs,
   eventsFromLiveStats,
+  gameweekBreakdownFromStats,
   FEED_PAGE_SIZE,
   formatFeedTime,
   liveGameweekPoints,
@@ -230,8 +231,36 @@ describe('live feed', () => {
       teamShortName: 'MCI',
       label: 'Goal',
       points: 4,
+      gameweekPoints: 13,
     })
     expect(events[2].points).toBe(3)
+    expect(events[0].gameweekBreakdown).toEqual([
+      { identifier: 'minutes', label: 'Minutes', count: 1, points: 2 },
+      { identifier: 'goals_scored', label: 'Goal', count: 2, points: 8 },
+      { identifier: 'assists', label: 'Assist', count: 1, points: 3 },
+    ])
+  })
+
+  it('breaks gameweek points into minutes, actions and leftover', () => {
+    expect(gameweekBreakdownFromStats({
+      minutes: 90,
+      points: 16,
+      goalsScored: 2,
+      assists: 1,
+      bonus: 3,
+    }, 4)).toEqual([
+      { identifier: 'minutes', label: 'Minutes', count: 1, points: 2 },
+      { identifier: 'goals_scored', label: 'Goal', count: 2, points: 8 },
+      { identifier: 'assists', label: 'Assist', count: 1, points: 3 },
+      { identifier: 'bonus', label: 'Bonus', count: 1, points: 3 },
+    ])
+    expect(gameweekBreakdownFromStats({
+      minutes: 90,
+      points: 4,
+    }, 3)).toEqual([
+      { identifier: 'minutes', label: 'Minutes', count: 1, points: 2 },
+      { identifier: 'other', label: 'Other', count: 1, points: 2 },
+    ])
   })
 
   it('keeps the earliest timestamp when the same event is seen again', () => {
@@ -260,8 +289,8 @@ describe('live feed', () => {
 
   it('updates bonus points without changing the first-seen time', () => {
     const merged = mergeFeedEvents(
-      [{ id: '9:bonus:1', at: 1000, elementId: 9, webName: 'Haaland', teamShortName: 'MCI', identifier: 'bonus', label: 'Bonus', points: 2, occurrence: 1 }],
-      [{ id: '9:bonus:1', at: 2000, elementId: 9, webName: 'Haaland', teamShortName: 'MCI', identifier: 'bonus', label: 'Bonus', points: 3, occurrence: 1 }],
+      [{ id: '9:bonus:1', at: 1000, elementId: 9, webName: 'Haaland', teamShortName: 'MCI', identifier: 'bonus', label: 'Bonus', points: 2, occurrence: 1, gameweekPoints: 11 }],
+      [{ id: '9:bonus:1', at: 2000, elementId: 9, webName: 'Haaland', teamShortName: 'MCI', identifier: 'bonus', label: 'Bonus', points: 3, occurrence: 1, gameweekPoints: 12 }],
     )
     expect(merged).toEqual([{
       id: '9:bonus:1',
@@ -273,6 +302,7 @@ describe('live feed', () => {
       label: 'Bonus',
       points: 3,
       occurrence: 1,
+      gameweekPoints: 12,
     }])
   })
 

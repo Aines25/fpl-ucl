@@ -1,5 +1,5 @@
 import type { CataloguePlayer, ClubInfo, ElementType, LivePlayerStats } from '../types/squad'
-import type { LeagueEntryPicks, LeaguePick, LeagueStandingRow, LiveFeedEvent, LiveOwner } from '../types/league'
+import type { LeagueEntryPicks, LeaguePick, LeagueStandingRow, LiveFeedBreakdownLine, LiveFeedEvent, LiveOwner } from '../types/league'
 
 export type PlayerMatchState = 'played' | 'out' | 'pending'
 
@@ -205,6 +205,128 @@ function stat(live: LivePlayerStats | undefined, key: keyof LivePlayerStats) {
   return live?.[key] ?? 0
 }
 
+interface ScoringHit {
+  identifier: string
+  label: string
+  points: number
+  occurrence: number
+}
+
+function minutesPoints(minutes: number) {
+  if (minutes <= 0) return 0
+  return minutes >= 60 ? 2 : 1
+}
+
+function scoringHits(stats: LivePlayerStats, type: ElementType): ScoringHit[] {
+  const hits: ScoringHit[] = []
+  const push = (identifier: string, label: string, points: number, occurrence: number) => {
+    if (!points) return
+    hits.push({ identifier, label, points, occurrence })
+  }
+
+  const goals = stat(stats, 'goalsScored')
+  for (let index = 1; index <= goals; index += 1) {
+    push('goals_scored', 'Goal', GOAL_POINTS[type], index)
+  }
+
+  const assists = stat(stats, 'assists')
+  for (let index = 1; index <= assists; index += 1) {
+    push('assists', 'Assist', 3, index)
+  }
+
+  const cleanSheets = stat(stats, 'cleanSheets')
+  if (cleanSheets > 0 && CLEAN_SHEET_POINTS[type]) {
+    push('clean_sheets', 'Clean sheet', CLEAN_SHEET_POINTS[type], 1)
+  }
+
+  if (type === 1 || type === 2) {
+    const concededChunks = Math.floor(stat(stats, 'goalsConceded') / 2)
+    for (let index = 1; index <= concededChunks; index += 1) {
+      push('goals_conceded', 'Goals conceded', -1, index)
+    }
+  }
+
+  const ownGoals = stat(stats, 'ownGoals')
+  for (let index = 1; index <= ownGoals; index += 1) {
+    push('own_goals', 'Own goal', -2, index)
+  }
+
+  const pensSaved = stat(stats, 'penaltiesSaved')
+  for (let index = 1; index <= pensSaved; index += 1) {
+    push('penalties_saved', 'Penalty save', 5, index)
+  }
+
+  const pensMissed = stat(stats, 'penaltiesMissed')
+  for (let index = 1; index <= pensMissed; index += 1) {
+    push('penalties_missed', 'Penalty miss', -2, index)
+  }
+
+  const yellows = stat(stats, 'yellowCards')
+  for (let index = 1; index <= yellows; index += 1) {
+    push('yellow_cards', 'Yellow card', -1, index)
+  }
+
+  const reds = stat(stats, 'redCards')
+  for (let index = 1; index <= reds; index += 1) {
+    push('red_cards', 'Red card', -3, index)
+  }
+
+  const saveChunks = Math.floor(stat(stats, 'saves') / 3)
+  for (let index = 1; index <= saveChunks; index += 1) {
+    push('saves', 'Saves', 1, index)
+  }
+
+  const bonus = stat(stats, 'bonus')
+  if (bonus > 0) push('bonus', 'Bonus', bonus, 1)
+
+  return hits
+}
+
+function breakdownFromHits(
+  hits: ScoringHit[],
+  totalPoints: number,
+  minutes: number,
+): LiveFeedBreakdownLine[] {
+  const lines: LiveFeedBreakdownLine[] = []
+  const appearance = minutesPoints(minutes)
+  if (appearance) {
+    lines.push({ identifier: 'minutes', label: 'Minutes', count: 1, points: appearance })
+  }
+
+  const grouped = new Map<string, LiveFeedBreakdownLine>()
+  for (const hit of hits) {
+    const existing = grouped.get(hit.identifier)
+    if (existing) {
+      existing.count += 1
+      existing.points += hit.points
+    }
+    else {
+      grouped.set(hit.identifier, {
+        identifier: hit.identifier,
+        label: hit.label,
+        count: 1,
+        points: hit.points,
+      })
+    }
+  }
+  lines.push(...grouped.values())
+
+  const leftover = totalPoints - lines.reduce((sum, line) => sum + line.points, 0)
+  if (leftover) {
+    lines.push({ identifier: 'other', label: 'Other', count: 1, points: leftover })
+  }
+
+  return lines
+}
+
+export function gameweekBreakdownFromStats(
+  stats: LivePlayerStats,
+  elementType?: number,
+): LiveFeedBreakdownLine[] {
+  const type = asElementType(elementType)
+  return breakdownFromHits(scoringHits(stats, type), stats.points, stats.minutes)
+}
+
 export function eventsFromLiveStats(
   live: Map<number, LivePlayerStats>,
   catalogue: Map<number, CataloguePlayer>,
@@ -222,76 +344,24 @@ export function eventsFromLiveStats(
     const matchFinished = finishedByTeam
       ? !teamId || !finishedByTeam.has(teamId) || Boolean(finishedByTeam.get(teamId))
       : false
+    const hits = scoringHits(stats, type)
+    const gameweekBreakdown = breakdownFromHits(hits, stats.points, stats.minutes)
 
-    const push = (identifier: string, label: string, points: number, occurrence: number) => {
-      if (!points) return
+    for (const hit of hits) {
       events.push({
-        id: `${elementId}:${identifier}:${occurrence}`,
+        id: `${elementId}:${hit.identifier}:${hit.occurrence}`,
         elementId,
         webName,
         teamShortName,
-        identifier,
-        label,
-        points,
-        occurrence,
+        identifier: hit.identifier,
+        label: hit.label,
+        points: hit.points,
+        occurrence: hit.occurrence,
+        gameweekPoints: stats.points,
+        gameweekBreakdown,
         matchFinished,
       })
     }
-
-    const goals = stat(stats, 'goalsScored')
-    for (let index = 1; index <= goals; index += 1) {
-      push('goals_scored', 'Goal', GOAL_POINTS[type], index)
-    }
-
-    const assists = stat(stats, 'assists')
-    for (let index = 1; index <= assists; index += 1) {
-      push('assists', 'Assist', 3, index)
-    }
-
-    const cleanSheets = stat(stats, 'cleanSheets')
-    if (cleanSheets > 0 && CLEAN_SHEET_POINTS[type]) {
-      push('clean_sheets', 'Clean sheet', CLEAN_SHEET_POINTS[type], 1)
-    }
-
-    if (type === 1 || type === 2) {
-      const concededChunks = Math.floor(stat(stats, 'goalsConceded') / 2)
-      for (let index = 1; index <= concededChunks; index += 1) {
-        push('goals_conceded', 'Goals conceded', -1, index)
-      }
-    }
-
-    const ownGoals = stat(stats, 'ownGoals')
-    for (let index = 1; index <= ownGoals; index += 1) {
-      push('own_goals', 'Own goal', -2, index)
-    }
-
-    const pensSaved = stat(stats, 'penaltiesSaved')
-    for (let index = 1; index <= pensSaved; index += 1) {
-      push('penalties_saved', 'Penalty save', 5, index)
-    }
-
-    const pensMissed = stat(stats, 'penaltiesMissed')
-    for (let index = 1; index <= pensMissed; index += 1) {
-      push('penalties_missed', 'Penalty miss', -2, index)
-    }
-
-    const yellows = stat(stats, 'yellowCards')
-    for (let index = 1; index <= yellows; index += 1) {
-      push('yellow_cards', 'Yellow card', -1, index)
-    }
-
-    const reds = stat(stats, 'redCards')
-    for (let index = 1; index <= reds; index += 1) {
-      push('red_cards', 'Red card', -3, index)
-    }
-
-    const saveChunks = Math.floor(stat(stats, 'saves') / 3)
-    for (let index = 1; index <= saveChunks; index += 1) {
-      push('saves', 'Saves', 1, index)
-    }
-
-    const bonus = stat(stats, 'bonus')
-    if (bonus > 0) push('bonus', 'Bonus', bonus, 1)
   }
 
   return events
