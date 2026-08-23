@@ -1,4 +1,4 @@
-import { competitionChipAdjustment } from '../../lib/engine/squad'
+import { competitionGameweekPoints } from '../../lib/engine/squad'
 import type { FplEventState, FplGameweekScore } from '../../lib/types/competition'
 
 export const FPL_BASE = 'https://fantasy.premierleague.com/api'
@@ -194,6 +194,7 @@ export function normaliseEvent(event: NonNullable<FplBootstrapResponse['events']
  * FPL `entry_history.points` is the official Gameweek score, including chips.
  * This competition drops Bench Boost bench points and the extra Triple Captain
  * multiplier. Transfer hits are then subtracted once from that adjusted total.
+ * While the gameweek is live, prefer the per-player live feed so totals match the pitch.
  */
 export function normaliseGameweekScore(
   managerId: number,
@@ -201,6 +202,7 @@ export function normaliseGameweekScore(
   gameweek: number,
   payload: FplPicksResponse | null,
   live: Map<number, { points: number }> = new Map(),
+  useLivePoints = false,
 ): FplGameweekScore {
   if (!payload?.entry_history) {
     return {
@@ -214,8 +216,13 @@ export function normaliseGameweekScore(
     }
   }
 
-  const points = (payload.entry_history.points ?? 0)
-    - competitionChipAdjustment(payload.active_chip, payload.picks ?? [], live)
+  const points = competitionGameweekPoints(
+    payload.active_chip,
+    payload.picks ?? [],
+    live,
+    payload.entry_history.points ?? 0,
+    useLivePoints,
+  )
   const transferCost = payload.entry_history.event_transfers_cost ?? 0
   return {
     managerId,
@@ -233,4 +240,9 @@ export function cacheMaxAge(event: FplEventState | undefined) {
   if (event.dataChecked) return 60 * 60 * 12
   if (event.isCurrent) return 60
   return 60 * 10
+}
+
+export function setApiCacheHeaders(event: Parameters<typeof setHeader>[0], sMaxAge: number, staleWhileRevalidate = 30) {
+  setHeader(event, 'cache-control', 'private, no-cache')
+  setHeader(event, 'cdn-cache-control', `public, s-maxage=${sMaxAge}, stale-while-revalidate=${staleWhileRevalidate}`)
 }

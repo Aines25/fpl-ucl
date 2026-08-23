@@ -1,5 +1,6 @@
 import { getPlayer } from '../../data/players'
 import { indexClubFixtures } from '../../lib/engine/club-fixtures'
+import { shouldUseLiveGameweekPoints } from '../../lib/engine/results'
 import { emptySquad, hydrateSquad, squadMovesFromTransfers, summariseChips } from '../../lib/engine/squad'
 import type { CataloguePlayer, ClubInfo, FplSquadView, LivePlayerStats } from '../../lib/types/squad'
 import { isFresh, type Timed } from './cache'
@@ -21,6 +22,7 @@ const SQUAD_TTL_MS = 45_000
 interface BootstrapCatalogue {
   players: Map<number, CataloguePlayer>
   teams: Map<number, ClubInfo>
+  events: Array<{ id: number, finished: boolean, dataChecked: boolean }>
 }
 
 let catalogueCache: Timed<BootstrapCatalogue> | null = null
@@ -55,7 +57,15 @@ function catalogueFromBootstrap(payload: FplBootstrapResponse): BootstrapCatalog
       code: element.code,
     })
   }
-  return { players, teams }
+  return {
+    players,
+    teams,
+    events: (payload.events ?? []).map((event) => ({
+      id: event.id,
+      finished: event.finished,
+      dataChecked: event.data_checked,
+    })),
+  }
 }
 
 export function rememberCatalogueFromBootstrap(payload: FplBootstrapResponse) {
@@ -156,7 +166,7 @@ export async function getSquadByEntry(input: {
     return emptySquad(managerId, 0, name, gameweek)
   }
 
-  const key = `entry:v3:${fplId}:${gameweek}`
+  const key = `entry:v4:${fplId}:${gameweek}`
   const cached = squadCache.get(key)
   if (isFresh(cached, SQUAD_TTL_MS) && cached) return cached.data
 
@@ -172,6 +182,7 @@ export async function getSquadByEntry(input: {
       fplFetch<FplHistoryResponse>(`/entry/${fplId}/history/`).catch(() => null),
     ])
       .then(([catalogue, live, fixtures, payload, manager, transfers, history]) => {
+        const event = catalogue.events?.find((entry) => entry.id === gameweek)
         const data = hydrateSquad({
           managerId,
           fplId,
@@ -182,6 +193,7 @@ export async function getSquadByEntry(input: {
           catalogue: catalogue.players,
           live,
           fixtures: indexClubFixtures(fixtures, catalogue.teams),
+          useLivePoints: shouldUseLiveGameweekPoints(event) && live.size > 0,
         })
         data.moves = squadMovesFromTransfers(transfers, gameweek, catalogue.players)
         const chips = summariseChips(history?.chips, gameweek)

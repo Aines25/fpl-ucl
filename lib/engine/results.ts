@@ -14,6 +14,15 @@ export function eventStatus(event: FplEventState | undefined): FixtureStatus {
   return 'scheduled'
 }
 
+/**
+ * FPL `entry_history.points` lags the live per-player feed while matches are on.
+ * Use the live feed until FPL marks the gameweek finished.
+ */
+export function shouldUseLiveGameweekPoints(event: Pick<FplEventState, 'finished' | 'dataChecked'> | undefined) {
+  if (!event) return true
+  return !event.finished && !event.dataChecked
+}
+
 function scoreHasStarted(score: FplGameweekScore | undefined) {
   return Boolean(score?.available && (score.points !== 0 || score.transferCost !== 0))
 }

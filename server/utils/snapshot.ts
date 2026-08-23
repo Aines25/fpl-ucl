@@ -6,6 +6,7 @@ import { resolveKnockoutTie } from '~~/lib/engine/knockout'
 import { scenariosForGroup } from '~~/lib/engine/scenarios'
 import type { FplEventState, GroupId, GroupScenarios } from '~~/lib/types/competition'
 import { isFresh, readSharedCache, writeSharedCache, type Timed } from './cache'
+import { setApiCacheHeaders } from './fpl'
 import { getBootstrap, getScoresForGameweeks, maxAgeForEvents } from './scores'
 
 export async function buildCompetitionSnapshot() {
@@ -112,9 +113,8 @@ function snapshotTtlSeconds(snapshot?: CompetitionSnapshot) {
   return maxAgeForEvents(snapshot.events, gameweeks)
 }
 
-export function snapshotCacheControl(snapshot: CompetitionSnapshot) {
-  const maxAge = snapshotTtlSeconds(snapshot)
-  return `public, s-maxage=${maxAge}, stale-while-revalidate=600`
+export function snapshotCacheControl(event: Parameters<typeof setApiCacheHeaders>[0], snapshot: CompetitionSnapshot) {
+  setApiCacheHeaders(event, snapshotTtlSeconds(snapshot))
 }
 
 export async function getCompetitionSnapshot() {

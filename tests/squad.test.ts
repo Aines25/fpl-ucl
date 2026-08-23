@@ -55,6 +55,60 @@ describe('squad helpers', () => {
     expect(competitionChipAdjustment(null, picks, live)).toBe(0)
   })
 
+  it('uses live pick totals when official FPL points are still lagging', () => {
+    const squad = hydrateSquad({
+      managerId: 15,
+      fplId: 24746,
+      name: 'Danny Windsor',
+      teamName: 'Xabi Wan Kenobi',
+      gameweek: 1,
+      catalogue,
+      live: new Map<number, LivePlayerStats>([
+        [1, { minutes: 90, points: 1 }],
+        [2, { minutes: 90, points: 9 }],
+        [3, { minutes: 90, points: 1 }],
+        [4, { minutes: 90, points: 2 }],
+        [5, { minutes: 90, points: 0 }],
+        [6, { minutes: 90, points: 2 }],
+        [7, { minutes: 90, points: 6 }],
+        [8, { minutes: 90, points: 9 }],
+        [9, { minutes: 90, points: 2 }],
+        [10, { minutes: 90, points: 0 }],
+        [11, { minutes: 90, points: 2 }],
+        [12, { minutes: 90, points: 9 }],
+      ]),
+      useLivePoints: true,
+      payload: {
+        active_chip: 'bboost',
+        entry_history: {
+          points: 35,
+          event_transfers: 0,
+          event_transfers_cost: 0,
+        },
+        picks: [
+          { element: 1, position: 1, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 2, position: 2, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 3, position: 3, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 4, position: 4, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 5, position: 5, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 6, position: 6, multiplier: 2, is_captain: true, is_vice_captain: false },
+          { element: 7, position: 7, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 8, position: 8, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 9, position: 9, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 10, position: 10, multiplier: 1, is_captain: false, is_vice_captain: false },
+          { element: 11, position: 11, multiplier: 1, is_captain: false, is_vice_captain: true },
+          { element: 12, position: 12, multiplier: 1, is_captain: false, is_vice_captain: false },
+        ],
+      },
+    })
+
+    const pitchTotal = squad.starters.reduce((sum, slot) => sum + slot.points, 0)
+    expect(pitchTotal).toBe(36)
+    expect(squad.points).toBe(36)
+    expect(squad.netPoints).toBe(36)
+    expect(squad.officialPoints).toBe(35)
+  })
+
   it('formats value and transfers', () => {
     expect(formatTeamValue(1005)).toBe('£100.5m')
     expect(formatTransfers(0, 0)).toBe('0')

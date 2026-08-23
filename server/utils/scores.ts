@@ -1,6 +1,7 @@
 import { committedScoresForGameweek } from '../../data/frozen-scores'
 import { players } from '../../data/players'
 import { alignArchivedScores, archiveIsComplete } from '../../lib/engine/archive'
+import { shouldUseLiveGameweekPoints } from '../../lib/engine/results'
 import type { FplEventState, FplGameweekScore } from '../../lib/types/competition'
 import {
   isFresh,
@@ -131,12 +132,15 @@ export async function getGameweekScore(
   }
 
   try {
-    const [payload, live] = await Promise.all([
+    const [payload, live, bootstrap] = await Promise.all([
       fplFetch<FplPicksResponse>(`/entry/${fplId}/event/${gameweek}/picks/`),
       getLiveStats(gameweek),
+      getBootstrap().catch(() => null),
     ])
+    const event = bootstrap?.events.find((entry) => entry.id === gameweek)
+    const useLivePoints = shouldUseLiveGameweekPoints(event) && live.size > 0
     const chip = payload.active_chip
-    const needsLive = chip === 'bboost' || chip === '3xc'
+    const needsLive = useLivePoints || chip === 'bboost' || chip === '3xc'
     if (needsLive && live.size === 0) {
       return recalledScore(managerId, gameweek) ?? {
         managerId,
@@ -148,7 +152,7 @@ export async function getGameweekScore(
         available: false,
       }
     }
-    const score = normaliseGameweekScore(managerId, fplId, gameweek, payload, live)
+    const score = normaliseGameweekScore(managerId, fplId, gameweek, payload, live, useLivePoints)
     rememberScore(score)
     return score
   }

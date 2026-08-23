@@ -2,6 +2,6 @@ import { getCompetitionSnapshot, snapshotCacheControl } from '../../utils/snapsh
 
 export default defineEventHandler(async (event) => {
   const snapshot = await getCompetitionSnapshot()
-  setHeader(event, 'cache-control', snapshotCacheControl(snapshot))
+  snapshotCacheControl(event, snapshot)
   return snapshot
 })

@@ -1,3 +1,4 @@
+import { setApiCacheHeaders } from '../../utils/fpl'
 import { getClassicLeague } from '../../utils/league'
 import { getBootstrap, maxAgeForEvents } from '../../utils/scores'
 
@@ -12,6 +13,6 @@ export default defineEventHandler(async (event) => {
   catch {
     maxAge = 60
   }
-  setHeader(event, 'cache-control', `public, s-maxage=${maxAge}, stale-while-revalidate=600`)
+  setApiCacheHeaders(event, maxAge)
   return table
 })

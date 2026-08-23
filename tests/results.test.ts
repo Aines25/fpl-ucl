@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { determineFixtureResult } from '../lib/engine/results'
+import { determineFixtureResult, shouldUseLiveGameweekPoints } from '../lib/engine/results'
 import type { FplEventState, FplGameweekScore, TournamentFixture } from '../lib/types/competition'
 
 const fixture: TournamentFixture = {
@@ -88,5 +88,14 @@ describe('determineFixtureResult', () => {
     expect(result.homeScore).toBe(20)
     expect(result.awayScore).toBeNull()
     expect(result.winnerId).toBeNull()
+  })
+})
+
+describe('shouldUseLiveGameweekPoints', () => {
+  it('uses the live feed until FPL finishes the gameweek', () => {
+    expect(shouldUseLiveGameweekPoints(undefined)).toBe(true)
+    expect(shouldUseLiveGameweekPoints(event())).toBe(true)
+    expect(shouldUseLiveGameweekPoints(event({ finished: true }))).toBe(false)
+    expect(shouldUseLiveGameweekPoints(event({ dataChecked: true }))).toBe(false)
   })
 })

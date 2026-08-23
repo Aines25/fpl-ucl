@@ -116,6 +116,34 @@ export function competitionChipAdjustment(
   return 0
 }
 
+export function livePicksGrossPoints(
+  picks: Array<{ element: number; multiplier: number }>,
+  live: Map<number, { points: number }>,
+) {
+  return picks.reduce((sum, pick) => {
+    if (pick.multiplier <= 0) return sum
+    return sum + (live.get(pick.element)?.points ?? 0) * pick.multiplier
+  }, 0)
+}
+
+/**
+ * Competition GW total: official FPL points minus house-rule chip extras,
+ * or the live per-player sum when `entry_history.points` is still lagging.
+ */
+export function competitionGameweekPoints(
+  chip: string | null | undefined,
+  picks: Array<{ element: number; position: number; multiplier: number }>,
+  live: Map<number, { points: number }>,
+  officialPoints: number,
+  useLivePoints = false,
+) {
+  const adjustment = competitionChipAdjustment(chip, picks, live)
+  if (useLivePoints && live.size > 0 && picks.length > 0) {
+    return livePicksGrossPoints(picks, live) - adjustment
+  }
+  return officialPoints - adjustment
+}
+
 export function formationFromTypes(types: number[]) {
   const defs = types.filter((type) => type === 2).length
   const mids = types.filter((type) => type === 3).length
@@ -219,6 +247,7 @@ export function hydrateSquad(input: {
   catalogue: Map<number, CataloguePlayer>
   live: Map<number, LivePlayerStats>
   fixtures?: Map<number, ClubFixture>
+  useLivePoints?: boolean
 }): FplSquadView {
   const { managerId, fplId, name, teamName, gameweek, payload, catalogue, live } = input
   const fixtures = input.fixtures ?? new Map<number, ClubFixture>()
@@ -237,7 +266,7 @@ export function hydrateSquad(input: {
   const bench = slots.filter((slot) => slot.pickPosition > 11)
   const chip = payload.active_chip ?? null
   const officialPoints = history?.points ?? 0
-  const points = officialPoints - competitionChipAdjustment(chip, picks, live)
+  const points = competitionGameweekPoints(chip, picks, live, officialPoints, input.useLivePoints)
   const transferCost = history?.event_transfers_cost ?? 0
 
   return {

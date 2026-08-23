@@ -1,5 +1,5 @@
 export { generateGroupStageFixtures } from './schedule'
-export { determineFixtureResult, eventStatus } from './results'
+export { determineFixtureResult, eventStatus, shouldUseLiveGameweekPoints } from './results'
 export { standingsForGroup } from './tiebreakers'
 export { activeCompetitionIds, qualifiedFromGroup, qualifiedSides } from './qualification'
 export { decideKnockoutWinner, resolveKnockoutTie } from './knockout'
@@ -9,7 +9,9 @@ export {
   chipLabel,
   CHIP_RESET_GAMEWEEK,
   competitionChipAdjustment,
+  competitionGameweekPoints,
   emptySquad,
+  livePicksGrossPoints,
   formationFromTypes,
   formatTeamValue,
   formatTransfers,

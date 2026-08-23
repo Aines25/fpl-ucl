@@ -69,6 +69,23 @@ describe('normaliseGameweekScore', () => {
     expect(score.netPoints).toBe(81)
   })
 
+  it('uses live pick totals while official FPL points lag', () => {
+    const score = normaliseGameweekScore(1, 99, 1, {
+      active_chip: 'bboost',
+      entry_history: {
+        points: 35,
+        event_transfers_cost: 0,
+      },
+      picks: [
+        { element: 9, position: 9, multiplier: 2, is_captain: true, is_vice_captain: false },
+        { element: 12, position: 12, multiplier: 1, is_captain: false, is_vice_captain: false },
+        { element: 13, position: 13, multiplier: 1, is_captain: false, is_vice_captain: false },
+      ],
+    }, live, true)
+    expect(score.points).toBe(16)
+    expect(score.netPoints).toBe(16)
+  })
+
   it('retries transient FPL failures, not missing teams', () => {
     expect(isRetryableStatus(429)).toBe(true)
     expect(isRetryableStatus(403)).toBe(true)
