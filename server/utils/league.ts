@@ -10,6 +10,7 @@ import { getPlayerCatalogue } from './squad'
 const LEAGUE_TTL_MS = 60_000
 const MAX_PAGES = 6
 const CAPTAIN_BATCH = 10
+const CAPTAIN_FETCH_LIMIT = 40
 const CAPTAIN_PERSIST_SECONDS = 60 * 60 * 12
 
 type LeaguePickExtras = Pick<LeagueStandingRow, 'captain' | 'viceCaptain' | 'transfers' | 'chip'>
@@ -60,6 +61,10 @@ export function extrasFromPicks(
 
 function extrasAreComplete(extras: LeaguePickExtras | undefined) {
   return typeof extras?.transfers === 'number' && 'chip' in extras
+}
+
+function leagueCaptainsComplete(standings: LeagueStandingRow[]) {
+  return standings.every((row) => row.entryId <= 0 || extrasAreComplete(row))
 }
 
 export function normaliseLeagueStanding(
@@ -118,10 +123,11 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
     if (missing.length) {
       const catalogue = await getPlayerCatalogue()
       const names = new Map([...catalogue.values()].map((player) => [player.id, player.webName]))
-      let fetched = 0
+      const toFetch = missing.slice(0, CAPTAIN_FETCH_LIMIT)
 
-      for (let index = 0; index < missing.length; index += CAPTAIN_BATCH) {
-        const batch = missing.slice(index, index + CAPTAIN_BATCH)
+      for (let index = 0; index < toFetch.length; index += CAPTAIN_BATCH) {
+        const batch = toFetch.slice(index, index + CAPTAIN_BATCH)
+        let fetched = 0
         await Promise.all(batch.map(async (entryId) => {
           const payload = await fplFetch<FplPicksResponse>(
             `/entry/${entryId}/event/${gameweek}/picks/`,
@@ -130,9 +136,8 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
           captainMemory.set(captainKey(entryId, gameweek), extrasFromPicks(payload, names))
           fetched += 1
         }))
+        if (fetched) await persistCaptainMemory(gameweek)
       }
-
-      if (fetched) await persistCaptainMemory(gameweek)
     }
   }
 
@@ -192,13 +197,15 @@ export async function getClassicLeague(leagueId = competition.fplLeagueId) {
     leagueInflight = fetchClassicLeague(leagueId)
       .then(async (data) => {
         leagueMemory = { at: Date.now(), data }
-        let persistSeconds = 60 * 10
-        try {
-          const bootstrap = await getBootstrap()
-          persistSeconds = cacheMaxAge(bootstrap.current)
-        }
-        catch {
+        let persistSeconds = 60
+        if (leagueCaptainsComplete(data.standings)) {
           persistSeconds = 60 * 10
+          try {
+            persistSeconds = cacheMaxAge((await getBootstrap()).current)
+          }
+          catch {
+            persistSeconds = 60 * 10
+          }
         }
         await writeSharedCache(`fpl:league:v2:${leagueId}`, data, persistSeconds)
         return data

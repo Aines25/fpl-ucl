@@ -17,7 +17,7 @@ import {
   type FplManagerResponse,
   type FplPicksResponse,
 } from './fpl'
-import { getLiveStats } from './squad'
+import { getLiveStats, rememberCatalogueFromBootstrap } from './squad'
 
 const BOOTSTRAP_TTL_MS = 60_000
 const SCORE_TTL_MS = 60_000
@@ -87,6 +87,7 @@ export async function getBootstrap() {
 
   try {
     const payload = await fplFetch<FplBootstrapResponse>('/bootstrap-static/')
+    rememberCatalogueFromBootstrap(payload)
     const events = (payload.events ?? []).map(normaliseEvent)
     const current = events.find((event) => event.isCurrent) ?? events.find((event) => !event.finished)
     const data = { events, current }

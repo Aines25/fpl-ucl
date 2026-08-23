@@ -33,38 +33,44 @@ const fixtureInflight = new Map<number, Promise<FplFixtureResponse[]>>()
 const squadCache = new Map<string, Timed<FplSquadView>>()
 const squadInflight = new Map<string, Promise<FplSquadView>>()
 
+function catalogueFromBootstrap(payload: FplBootstrapResponse): BootstrapCatalogue {
+  const teams = new Map<number, ClubInfo>()
+  for (const team of payload.teams ?? []) {
+    teams.set(team.id, {
+      id: team.id,
+      shortName: team.short_name,
+      code: team.code,
+    })
+  }
+  const players = new Map<number, CataloguePlayer>()
+  for (const element of payload.elements ?? []) {
+    const team = teams.get(element.team)
+    const elementType = element.element_type
+    players.set(element.id, {
+      id: element.id,
+      webName: element.web_name,
+      teamId: element.team,
+      teamCode: team?.code ?? 0,
+      elementType: elementType === 2 || elementType === 3 || elementType === 4 ? elementType : 1,
+      code: element.code,
+    })
+  }
+  return { players, teams }
+}
+
+export function rememberCatalogueFromBootstrap(payload: FplBootstrapResponse) {
+  const data = catalogueFromBootstrap(payload)
+  catalogueCache = { at: Date.now(), data }
+  return data
+}
+
 async function getBootstrapCatalogue() {
   if (isFresh(catalogueCache, CATALOGUE_TTL_MS) && catalogueCache) {
     return catalogueCache.data
   }
   if (!catalogueInflight) {
     catalogueInflight = fplFetch<FplBootstrapResponse>('/bootstrap-static/')
-      .then((payload) => {
-        const teams = new Map<number, ClubInfo>()
-        for (const team of payload.teams ?? []) {
-          teams.set(team.id, {
-            id: team.id,
-            shortName: team.short_name,
-            code: team.code,
-          })
-        }
-        const players = new Map<number, CataloguePlayer>()
-        for (const element of payload.elements ?? []) {
-          const team = teams.get(element.team)
-          const elementType = element.element_type
-          players.set(element.id, {
-            id: element.id,
-            webName: element.web_name,
-            teamId: element.team,
-            teamCode: team?.code ?? 0,
-            elementType: elementType === 2 || elementType === 3 || elementType === 4 ? elementType : 1,
-            code: element.code,
-          })
-        }
-        const data = { players, teams }
-        catalogueCache = { at: Date.now(), data }
-        return data
-      })
+      .then((payload) => rememberCatalogueFromBootstrap(payload))
       .finally(() => {
         catalogueInflight = null
       })
