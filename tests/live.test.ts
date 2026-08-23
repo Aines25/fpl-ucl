@@ -3,6 +3,7 @@ import { indexTeamFinished } from '../lib/engine/club-fixtures'
 import {
   applyAutoSubs,
   eventsFromLiveStats,
+  FEED_PAGE_SIZE,
   formatFeedTime,
   liveGameweekPoints,
   liveStandingTotals,
@@ -294,13 +295,32 @@ describe('live feed', () => {
       { id: 'live-2', at: 1500, elementId: 5, webName: 'Saka', teamShortName: 'ARS', identifier: 'goals_scored', label: 'Goal', points: 5, occurrence: 1, matchFinished: false },
       { id: 'done-1', at: 9000, elementId: 9, webName: 'Haaland', teamShortName: 'MCI', identifier: 'goals_scored', label: 'Goal', points: 4, occurrence: 1, matchFinished: true },
     ]
-    expect(paginateFeed(events, 8)).toMatchObject({
+    expect(FEED_PAGE_SIZE).toBe(5)
+    expect(paginateFeed(events, FEED_PAGE_SIZE)).toMatchObject({
       visible: [{ id: 'live-1' }, { id: 'live-2' }],
       remaining: 1,
       liveCount: 2,
       hasFinishedBeyondLive: true,
     })
     expect(paginateFeed(events, Number.POSITIVE_INFINITY).visible.map((event) => event.id)).toEqual(['live-1', 'live-2', 'done-1'])
+  })
+
+  it('caps the first page at five live events', () => {
+    const events = Array.from({ length: 7 }, (_, index) => ({
+      id: `live-${index + 1}`,
+      at: 2000 - index,
+      elementId: 5,
+      webName: 'Saka',
+      teamShortName: 'ARS',
+      identifier: 'assists',
+      label: 'Assist',
+      points: 3,
+      occurrence: index + 1,
+      matchFinished: false,
+    }))
+    const page = paginateFeed(events, FEED_PAGE_SIZE)
+    expect(page.visible).toHaveLength(5)
+    expect(page.remaining).toBe(2)
   })
 })
 

@@ -189,7 +189,7 @@ watch(tab, () => {
 
           <div
             :class="liveMobileView === 'feed' ? '' : 'hidden lg:block'"
-            class="lg:sticky lg:top-[calc(var(--spacing-header)+var(--spacing-nav)+1rem)] lg:h-[calc(100dvh-var(--spacing-header)-var(--spacing-nav)-2rem)]"
+            class="lg:sticky lg:top-[calc(var(--spacing-header)+var(--spacing-nav)+1rem)] lg:max-h-[calc(100dvh-var(--spacing-header)-var(--spacing-nav)-2rem)]"
           >
             <LeagueLiveFeed
               :events="feed"

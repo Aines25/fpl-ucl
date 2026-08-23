@@ -33,13 +33,13 @@ function pointsLabel(points: number) {
 </script>
 
 <template>
-  <div class="flex h-full max-h-full flex-col overflow-hidden rounded-md border border-cyan/20 bg-navy-800/80 shadow-card">
+  <div class="flex flex-col rounded-md border border-cyan/20 bg-navy-800/80 shadow-card lg:max-h-[inherit] lg:overflow-hidden">
     <div class="shrink-0 border-b border-cyan/15 px-4 py-3">
       <p class="font-stats text-kicker tracking-kicker text-live uppercase">
         Live feed
       </p>
       <p class="mt-1 text-sm text-silver">
-        Latest events from matches still in play. Click a player to see who owns them.
+        Latest events from matches still in play. Click a row to see who owns them.
       </p>
     </div>
 
@@ -47,26 +47,26 @@ function pointsLabel(points: number) {
       {{ remaining ? 'No live events from unfinished matches.' : 'No live events yet. Goals, assists and cards appear here as FPL updates.' }}
     </p>
 
-    <ul v-else class="min-h-0 flex-1 divide-y divide-cyan/10 overflow-y-auto overscroll-contain">
+    <ul v-else class="divide-y divide-cyan/10 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
       <li v-for="event in visibleEvents" :key="event.id">
-        <div class="grid grid-cols-[6.5rem_1fr_auto] items-start gap-3 px-4 py-3 lg:grid-cols-1 xl:grid-cols-[7.5rem_1fr]">
+        <button
+          type="button"
+          class="group grid w-full cursor-pointer grid-cols-[6.5rem_1fr_auto] items-start gap-3 px-4 py-3 text-left hover:bg-cyan/5 lg:grid-cols-1 xl:grid-cols-[7.5rem_1fr]"
+          :aria-expanded="expandedEventId === event.id"
+          @click="togglePlayer(event.id)"
+        >
           <p class="font-stats text-[11px] leading-tight text-silver-dim uppercase">
             {{ formatFeedTime(event.at) }}
           </p>
           <div class="min-w-0 lg:flex lg:items-start lg:justify-between lg:gap-3 xl:block">
             <div>
-              <button
-                type="button"
-                class="inline-flex items-center gap-1 text-left font-medium text-white hover:text-cyan"
-                :aria-expanded="expandedEventId === event.id"
-                @click="togglePlayer(event.id)"
-              >
+              <span class="inline-flex items-center gap-1 font-medium text-white group-hover:text-cyan">
                 {{ event.webName }}
                 <ChevronDown
                   class="size-3.5 text-silver-dim transition-transform"
                   :class="expandedEventId === event.id ? 'rotate-180 text-cyan' : ''"
                 />
-              </button>
+              </span>
               <p v-if="event.teamShortName" class="text-[11px] text-silver-dim">
                 {{ event.teamShortName }}
               </p>
@@ -78,7 +78,7 @@ function pointsLabel(points: number) {
               {{ event.label }} {{ pointsLabel(event.points) }}
             </p>
           </div>
-        </div>
+        </button>
         <div
           v-if="expandedEventId === event.id"
           class="border-t border-cyan/10 bg-navy-900/60 px-4 py-3"

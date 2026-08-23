@@ -327,7 +327,7 @@ export function stampFeedEvents(
     .sort((left, right) => right.at - left.at || left.id.localeCompare(right.id))
 }
 
-export const FEED_PAGE_SIZE = 8
+export const FEED_PAGE_SIZE = 5
 
 export function feedDisplayPool(events: LiveFeedEvent[]) {
   const live = events.filter((event) => !event.matchFinished)
