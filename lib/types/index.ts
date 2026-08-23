@@ -25,6 +25,8 @@ export type {
 
 export type {
   CataloguePlayer,
+  ChipBalance,
+  ChipPlay,
   ClubFixture,
   ClubInfo,
   ElementType,

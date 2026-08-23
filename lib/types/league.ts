@@ -9,6 +9,7 @@ export interface LeagueStandingRow {
   competitionPlayerId: number | null
   captain: string | null
   viceCaptain: string | null
+  transfers: number | null
 }
 
 export interface ClassicLeagueTable {

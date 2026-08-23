@@ -1,4 +1,4 @@
-import type { CataloguePlayer, ClubFixture, ElementType, FplSquadView, LivePlayerStats, SquadMove, SquadSlot } from '../types/squad'
+import type { CataloguePlayer, ChipBalance, ChipPlay, ClubFixture, ElementType, FplSquadView, LivePlayerStats, SquadMove, SquadSlot } from '../types/squad'
 
 export interface SquadPick {
   element: number
@@ -29,6 +29,51 @@ const CHIP_LABELS: Record<string, string> = {
   '3xc': 'Triple Captain',
   freehit: 'Free Hit',
   manager: 'Assistant Manager',
+}
+
+export const CHIP_RESET_GAMEWEEK = 20
+export const SEASON_CHIPS = ['wildcard', 'freehit', 'bboost', '3xc'] as const
+
+export type ChipHalf = 'first' | 'second'
+
+export function chipHalf(gameweek: number): ChipHalf {
+  return gameweek < CHIP_RESET_GAMEWEEK ? 'first' : 'second'
+}
+
+export interface ChipRecord {
+  name?: string
+  event?: number
+}
+
+export function summariseChips(
+  plays: ChipRecord[] | null | undefined,
+  gameweek: number,
+): { chipsUsed: ChipPlay[], chipsRemaining: ChipBalance[] } {
+  const chipsUsed: ChipPlay[] = []
+  const usedKeys = new Set<string>()
+
+  for (const play of plays ?? []) {
+    if (!play.name || !play.event) continue
+    chipsUsed.push({
+      name: play.name,
+      label: chipLabel(play.name) ?? play.name,
+      event: play.event,
+    })
+    usedKeys.add(`${play.name}:${chipHalf(play.event)}`)
+  }
+
+  chipsUsed.sort((left, right) => left.event - right.event)
+
+  const half = chipHalf(gameweek)
+  const chipsRemaining: ChipBalance[] = SEASON_CHIPS
+    .filter((name) => !usedKeys.has(`${name}:${half}`))
+    .map((name) => ({
+      name,
+      label: chipLabel(name) ?? name,
+      half,
+    }))
+
+  return { chipsUsed, chipsRemaining }
 }
 
 export function playerPhotoUrl(code: number) {
@@ -105,8 +150,10 @@ export function emptySquad(
     gameweek,
     available: false,
     points: 0,
+    officialPoints: 0,
     transferCost: 0,
     netPoints: 0,
+    officialNetPoints: 0,
     transfers: 0,
     moves: [],
     overallRank: null,
@@ -116,6 +163,8 @@ export function emptySquad(
     bank: null,
     chip: null,
     chipLabel: null,
+    chipsUsed: [],
+    chipsRemaining: [],
     formation: '–',
     starters: [],
     bench: [],
@@ -187,7 +236,8 @@ export function hydrateSquad(input: {
   const starters = slots.filter((slot) => slot.pickPosition <= 11)
   const bench = slots.filter((slot) => slot.pickPosition > 11)
   const chip = payload.active_chip ?? null
-  const points = (history?.points ?? 0) - competitionChipAdjustment(chip, picks, live)
+  const officialPoints = history?.points ?? 0
+  const points = officialPoints - competitionChipAdjustment(chip, picks, live)
   const transferCost = history?.event_transfers_cost ?? 0
 
   return {
@@ -198,8 +248,10 @@ export function hydrateSquad(input: {
     gameweek,
     available: true,
     points,
+    officialPoints,
     transferCost,
     netPoints: points - transferCost,
+    officialNetPoints: officialPoints - transferCost,
     transfers: history?.event_transfers ?? 0,
     moves: [],
     overallRank: history?.overall_rank ?? null,
@@ -209,6 +261,8 @@ export function hydrateSquad(input: {
     bank: history?.bank ?? null,
     chip,
     chipLabel: chipLabel(chip),
+    chipsUsed: [],
+    chipsRemaining: [],
     formation: formationFromTypes(starters.map((slot) => slot.elementType)),
     starters,
     bench,

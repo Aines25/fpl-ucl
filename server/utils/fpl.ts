@@ -81,6 +81,14 @@ export interface FplManagerResponse {
   player_last_name?: string
 }
 
+export interface FplHistoryResponse {
+  chips?: Array<{
+    name?: string
+    event?: number
+    time?: string
+  }>
+}
+
 export interface FplTransferResponse {
   element_in?: number
   element_out?: number

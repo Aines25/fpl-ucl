@@ -2,9 +2,11 @@
 import { ArrowRight } from '@lucide/vue'
 import type { FplSquadView } from '../../../lib/types/squad'
 
-defineProps<{
+const props = defineProps<{
   squad: FplSquadView
 }>()
+
+const moves = computed(() => props.squad.moves ?? [])
 </script>
 
 <template>
@@ -13,13 +15,13 @@ defineProps<{
       Transfers · GW {{ squad.gameweek }}
     </p>
 
-    <p v-if="!squad.moves.length" class="mt-2 font-stats text-label text-silver">
+    <p v-if="!moves.length" class="mt-2 font-stats text-label text-silver">
       No transfers this gameweek
     </p>
 
     <ul v-else class="mt-3 divide-y divide-cyan/10">
       <li
-        v-for="move in squad.moves"
+        v-for="move in moves"
         :key="`${move.outId}-${move.inId}`"
         class="flex items-center justify-between gap-3 py-2 font-stats text-label"
       >

@@ -1,6 +1,6 @@
 import { getPlayer } from '../../data/players'
 import { indexClubFixtures } from '../../lib/engine/club-fixtures'
-import { emptySquad, hydrateSquad, squadMovesFromTransfers } from '../../lib/engine/squad'
+import { emptySquad, hydrateSquad, squadMovesFromTransfers, summariseChips } from '../../lib/engine/squad'
 import type { CataloguePlayer, ClubInfo, FplSquadView, LivePlayerStats } from '../../lib/types/squad'
 import { isFresh, type Timed } from './cache'
 import {
@@ -9,6 +9,7 @@ import {
   type FplFixtureResponse,
   type FplLiveResponse,
   type FplManagerResponse,
+  type FplHistoryResponse,
   type FplPicksResponse,
   type FplTransferResponse,
 } from './fpl'
@@ -134,7 +135,7 @@ export async function getSquadByEntry(input: {
     return emptySquad(managerId, 0, name, gameweek)
   }
 
-  const key = `entry:${fplId}:${gameweek}`
+  const key = `entry:v3:${fplId}:${gameweek}`
   const cached = squadCache.get(key)
   if (isFresh(cached, SQUAD_TTL_MS) && cached) return cached.data
 
@@ -147,8 +148,9 @@ export async function getSquadByEntry(input: {
       fplFetch<FplPicksResponse>(`/entry/${fplId}/event/${gameweek}/picks/`).catch(() => null),
       fplFetch<FplManagerResponse>(`/entry/${fplId}/`).catch(() => null),
       fplFetch<FplTransferResponse[]>(`/entry/${fplId}/transfers/`).catch(() => []),
+      fplFetch<FplHistoryResponse>(`/entry/${fplId}/history/`).catch(() => null),
     ])
-      .then(([catalogue, live, fixtures, payload, manager, transfers]) => {
+      .then(([catalogue, live, fixtures, payload, manager, transfers, history]) => {
         const data = hydrateSquad({
           managerId,
           fplId,
@@ -161,6 +163,9 @@ export async function getSquadByEntry(input: {
           fixtures: indexClubFixtures(fixtures, catalogue.teams),
         })
         data.moves = squadMovesFromTransfers(transfers, gameweek, catalogue.players)
+        const chips = summariseChips(history?.chips, gameweek)
+        data.chipsUsed = chips.chipsUsed
+        data.chipsRemaining = chips.chipsRemaining
         squadCache.set(key, { at: Date.now(), data })
         return data
       })

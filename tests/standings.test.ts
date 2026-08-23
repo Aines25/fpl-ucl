@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { activeCompetitionIds } from '../lib/engine/qualification'
 import { standingsForGroup } from '../lib/engine/tiebreakers'
 import type {
   CompetitionPlayer,
   FixtureResult,
+  KnockoutTieResult,
+  StandingRow,
   TournamentFixture,
 } from '../lib/types/competition'
 
@@ -82,5 +85,49 @@ describe('standingsForGroup', () => {
     expect(dave.points).toBe(3)
     expect(dave.pointsFor).toBeGreaterThan(christian.pointsFor)
     expect(christian.position).toBeLessThan(dave.position)
+  })
+})
+
+describe('activeCompetitionIds', () => {
+  function row(playerId: number, eliminated: boolean): StandingRow {
+    return {
+      playerId,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+      difference: 0,
+      points: 0,
+      position: playerId,
+      qualifyingZone: !eliminated,
+      eliminated,
+    }
+  }
+
+  it('keeps managers who are not eliminated from their group', () => {
+    expect([...activeCompetitionIds({
+      A: [row(1, false), row(2, true)],
+      B: [row(5, false)],
+    })]).toEqual([1, 5])
+  })
+
+  it('drops knockout losers once a winner is decided', () => {
+    const knockout: KnockoutTieResult[] = [{
+      tieId: 'r16-1',
+      playerOneId: 1,
+      playerTwoId: 5,
+      playerOneAggregate: 80,
+      playerTwoAggregate: 70,
+      winnerId: 1,
+      status: 'final',
+      decidedByTiebreak: false,
+    }]
+
+    expect([...activeCompetitionIds({
+      A: [row(1, false), row(2, true)],
+      B: [row(5, false)],
+    }, knockout)]).toEqual([1])
   })
 })

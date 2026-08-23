@@ -2,9 +2,20 @@
 import type { FplSquadView } from '../../../lib/types/squad'
 import { formatTeamValue, formatTransfers } from '../../../lib/engine/squad'
 
-defineProps<{
+const props = withDefaults(defineProps<{
   squad: FplSquadView
-}>()
+  scoring?: 'competition' | 'official'
+}>(), {
+  scoring: 'competition',
+})
+
+const totalPoints = computed(() => {
+  if (!props.squad.available) return '–'
+  if (props.scoring === 'official') {
+    return props.squad.officialNetPoints ?? props.squad.netPoints
+  }
+  return props.squad.netPoints
+})
 </script>
 
 <template>
@@ -33,9 +44,11 @@ defineProps<{
 
     <dl class="grid grid-cols-3 gap-3">
       <div>
-        <dt class="font-stats text-kicker tracking-kicker text-silver uppercase">Total points</dt>
+        <dt class="font-stats text-kicker tracking-kicker text-silver uppercase">
+          {{ scoring === 'official' ? 'FPL points' : 'Total points' }}
+        </dt>
         <dd class="font-stats text-2xl leading-tight text-star tabular-nums">
-          {{ squad.available ? squad.netPoints : '–' }}
+          {{ totalPoints }}
         </dd>
       </div>
       <div>

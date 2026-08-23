@@ -8,6 +8,7 @@ import {
   formatTransfers,
   hydrateSquad,
   squadMovesFromTransfers,
+  summariseChips,
 } from '../lib/engine/squad'
 import type { CataloguePlayer, LivePlayerStats } from '../lib/types/squad'
 
@@ -103,6 +104,8 @@ describe('squad helpers', () => {
     expect(squad.formation).toBe('3-4-3')
     expect(squad.points).toBe(64)
     expect(squad.netPoints).toBe(60)
+    expect(squad.officialPoints).toBe(72)
+    expect(squad.officialNetPoints).toBe(68)
     expect(squad.transfers).toBe(2)
     expect(squad.chipLabel).toBe('Triple Captain')
     expect(squad.starters).toHaveLength(11)
@@ -155,6 +158,8 @@ describe('squad helpers', () => {
     expect(squad.chipLabel).toBe('Bench Boost')
     expect(squad.points).toBe(33)
     expect(squad.netPoints).toBe(33)
+    expect(squad.officialPoints).toBe(35)
+    expect(squad.officialNetPoints).toBe(35)
     expect(squad.bench[0]?.points).toBe(2)
     expect(squad.bench[0]?.counting).toBe(true)
   })
@@ -201,6 +206,33 @@ describe('squad helpers', () => {
         outCost: 90,
       },
     ])
+  })
+
+  it('summarises chips used and remaining in the current half', () => {
+    expect(summariseChips([
+      { name: 'bboost', event: 1 },
+      { name: 'wildcard', event: 6 },
+    ], 8)).toEqual({
+      chipsUsed: [
+        { name: 'bboost', label: 'Bench Boost', event: 1 },
+        { name: 'wildcard', label: 'Wildcard', event: 6 },
+      ],
+      chipsRemaining: [
+        { name: 'freehit', label: 'Free Hit', half: 'first' },
+        { name: '3xc', label: 'Triple Captain', half: 'first' },
+      ],
+    })
+  })
+
+  it('refreshes remaining chips after the half-season reset', () => {
+    const summary = summariseChips([
+      { name: 'bboost', event: 1 },
+      { name: 'wildcard', event: 6 },
+      { name: '3xc', event: 22 },
+    ], 24)
+
+    expect(summary.chipsUsed.map((chip) => chip.name)).toEqual(['bboost', 'wildcard', '3xc'])
+    expect(summary.chipsRemaining.map((chip) => chip.name)).toEqual(['wildcard', 'freehit', 'bboost'])
   })
 
   it('falls back to Unknown when a transferred player is missing', () => {

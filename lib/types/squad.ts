@@ -55,6 +55,18 @@ export interface SquadMove {
   outCost: number
 }
 
+export interface ChipPlay {
+  name: string
+  label: string
+  event: number
+}
+
+export interface ChipBalance {
+  name: string
+  label: string
+  half: 'first' | 'second'
+}
+
 export interface FplSquadView {
   managerId: number
   fplId: number
@@ -63,8 +75,10 @@ export interface FplSquadView {
   gameweek: number
   available: boolean
   points: number
+  officialPoints: number
   transferCost: number
   netPoints: number
+  officialNetPoints: number
   transfers: number
   moves: SquadMove[]
   overallRank: number | null
@@ -74,6 +88,8 @@ export interface FplSquadView {
   bank: number | null
   chip: string | null
   chipLabel: string | null
+  chipsUsed: ChipPlay[]
+  chipsRemaining: ChipBalance[]
   formation: string
   starters: SquadSlot[]
   bench: SquadSlot[]

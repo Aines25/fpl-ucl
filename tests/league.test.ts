@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { captainsAreLocked, captainsFromPicks, normaliseLeagueStanding } from '../server/utils/league'
+import { captainsAreLocked, captainsFromPicks, extrasFromPicks, normaliseLeagueStanding } from '../server/utils/league'
 
 describe('normaliseLeagueStanding', () => {
   it('maps FPL standings and flags tournament managers', () => {
@@ -24,6 +24,23 @@ describe('normaliseLeagueStanding', () => {
       competitionPlayerId: 16,
       captain: null,
       viceCaptain: null,
+      transfers: null,
+    })
+  })
+})
+
+describe('extrasFromPicks', () => {
+  it('attaches this gameweek transfer count', () => {
+    expect(extrasFromPicks({
+      entry_history: { event_transfers: 2 },
+      picks: [
+        { element: 1, position: 1, multiplier: 2, is_captain: true, is_vice_captain: false },
+        { element: 2, position: 2, multiplier: 1, is_captain: false, is_vice_captain: true },
+      ],
+    }, new Map([[1, 'Haaland'], [2, 'Salah']]))).toEqual({
+      captain: 'Haaland',
+      viceCaptain: 'Salah',
+      transfers: 2,
     })
   })
 })

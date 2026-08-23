@@ -12,11 +12,11 @@ const MAX_PAGES = 6
 const CAPTAIN_BATCH = 10
 const CAPTAIN_PERSIST_SECONDS = 60 * 60 * 12
 
-type CaptainPair = Pick<LeagueStandingRow, 'captain' | 'viceCaptain'>
+type LeaguePickExtras = Pick<LeagueStandingRow, 'captain' | 'viceCaptain' | 'transfers'>
 
 let leagueMemory: Timed<ClassicLeagueTable> | null = null
 let leagueInflight: Promise<ClassicLeagueTable> | null = null
-const captainMemory = new Map<string, CaptainPair>()
+const captainMemory = new Map<string, LeaguePickExtras>()
 const captainSharedHydrated = new Set<number>()
 
 function playerByFplId() {
@@ -37,7 +37,7 @@ export function captainsAreLocked(event: FplEventState | undefined, now = Date.n
 export function captainsFromPicks(
   picks: FplPicksResponse['picks'],
   names: Map<number, string>,
-): CaptainPair {
+): Pick<LeaguePickExtras, 'captain' | 'viceCaptain'> {
   let captain: string | null = null
   let viceCaptain: string | null = null
   for (const pick of picks ?? []) {
@@ -45,6 +45,20 @@ export function captainsFromPicks(
     if (pick.is_vice_captain) viceCaptain = names.get(pick.element) ?? null
   }
   return { captain, viceCaptain }
+}
+
+export function extrasFromPicks(
+  payload: FplPicksResponse | null | undefined,
+  names: Map<number, string>,
+): LeaguePickExtras {
+  return {
+    ...captainsFromPicks(payload?.picks, names),
+    transfers: payload?.entry_history?.event_transfers ?? 0,
+  }
+}
+
+function extrasAreComplete(extras: LeaguePickExtras | undefined) {
+  return typeof extras?.transfers === 'number'
 }
 
 export function normaliseLeagueStanding(
@@ -63,12 +77,13 @@ export function normaliseLeagueStanding(
     competitionPlayerId: competitionIds.get(entryId) ?? null,
     captain: null,
     viceCaptain: null,
+    transfers: null,
   }
 }
 
 async function hydrateCaptainMemory(gameweek: number) {
   if (captainSharedHydrated.has(gameweek)) return
-  const shared = await readSharedCache<Record<string, CaptainPair>>(`fpl:league-captains:${gameweek}`)
+  const shared = await readSharedCache<Record<string, LeaguePickExtras>>(`fpl:league-picks:v2:${gameweek}`)
   if (shared?.data) {
     for (const [entryId, pair] of Object.entries(shared.data)) {
       captainMemory.set(captainKey(Number(entryId), gameweek), pair)
@@ -78,13 +93,13 @@ async function hydrateCaptainMemory(gameweek: number) {
 }
 
 async function persistCaptainMemory(gameweek: number) {
-  const data: Record<string, CaptainPair> = {}
+  const data: Record<string, LeaguePickExtras> = {}
   const suffix = `:${gameweek}`
   for (const [key, pair] of captainMemory) {
     if (!key.endsWith(suffix)) continue
     data[key.slice(0, -suffix.length)] = pair
   }
-  await writeSharedCache(`fpl:league-captains:${gameweek}`, data, CAPTAIN_PERSIST_SECONDS)
+  await writeSharedCache(`fpl:league-picks:v2:${gameweek}`, data, CAPTAIN_PERSIST_SECONDS)
 }
 
 async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEventState | undefined) {
@@ -96,7 +111,7 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
   if (captainsAreLocked(event)) {
     const missing = standings
       .map((row) => row.entryId)
-      .filter((entryId) => entryId > 0 && !captainMemory.has(captainKey(entryId, gameweek)))
+      .filter((entryId) => entryId > 0 && !extrasAreComplete(captainMemory.get(captainKey(entryId, gameweek))))
 
     if (missing.length) {
       const catalogue = await getPlayerCatalogue()
@@ -110,7 +125,7 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
             `/entry/${entryId}/event/${gameweek}/picks/`,
           ).catch(() => null)
           if (!payload) return
-          captainMemory.set(captainKey(entryId, gameweek), captainsFromPicks(payload.picks, names))
+          captainMemory.set(captainKey(entryId, gameweek), extrasFromPicks(payload, names))
           fetched += 1
         }))
       }
@@ -121,7 +136,7 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
 
   return standings.map((row) => ({
     ...row,
-    ...(captainMemory.get(captainKey(row.entryId, gameweek)) ?? { captain: null, viceCaptain: null }),
+    ...(captainMemory.get(captainKey(row.entryId, gameweek)) ?? { captain: null, viceCaptain: null, transfers: null }),
   }))
 }
 

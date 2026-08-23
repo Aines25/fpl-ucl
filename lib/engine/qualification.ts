@@ -1,4 +1,4 @@
-import type { GroupId, StandingRow } from '../types/competition'
+import type { GroupId, KnockoutTieResult, StandingRow } from '../types/competition'
 import { competition } from '../../data/competition'
 
 export function qualifiedFromGroup(rows: StandingRow[]) {
@@ -31,4 +31,25 @@ export function qualifiedSides(
       }
     })
     .filter((entry): entry is QualifiedSide => entry !== null)
+}
+
+export function activeCompetitionIds(
+  standingsByGroup: Record<GroupId, StandingRow[]>,
+  knockout: KnockoutTieResult[] = [],
+) {
+  const alive = new Set<number>()
+  for (const rows of Object.values(standingsByGroup)) {
+    for (const row of rows) {
+      if (!row.eliminated) alive.add(row.playerId)
+    }
+  }
+
+  for (const tie of knockout) {
+    if (tie.winnerId == null) continue
+    for (const playerId of [tie.playerOneId, tie.playerTwoId]) {
+      if (playerId && playerId !== tie.winnerId) alive.delete(playerId)
+    }
+  }
+
+  return alive
 }
