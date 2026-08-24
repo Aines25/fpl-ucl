@@ -34,6 +34,19 @@ export {
   pickClubFixture,
 } from './club-fixtures'
 export {
+  FDR_SHORT_WINDOW,
+  averageFdr,
+  buildFdrGrid,
+  clampFdr,
+  emptyFdrGrid,
+  fdrStartGameweek,
+  formatFdrAverage,
+  formatFdrOpponent,
+  remainingGameweeks,
+  sliceFdrGrid,
+  sortFdrRows,
+} from './fdr'
+export {
   applyAutoSubs,
   applyCaptainMultiplier,
   eventsFromLiveStats,

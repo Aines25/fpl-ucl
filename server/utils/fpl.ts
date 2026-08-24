@@ -81,6 +81,8 @@ export interface FplFixtureResponse {
   kickoff_time: string | null
   team_h: number
   team_a: number
+  team_h_difficulty?: number | null
+  team_a_difficulty?: number | null
   started: boolean | null
   finished: boolean
   finished_provisional?: boolean

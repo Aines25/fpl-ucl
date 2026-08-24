@@ -32,6 +32,9 @@ const liveCache = new Map<number, Timed<Map<number, LivePlayerStats>>>()
 const liveInflight = new Map<number, Promise<Map<number, LivePlayerStats>>>()
 const fixtureCache = new Map<number, Timed<FplFixtureResponse[]>>()
 const fixtureInflight = new Map<number, Promise<FplFixtureResponse[]>>()
+const ALL_FIXTURES_TTL_MS = 10 * 60 * 1000
+let allFixtureCache: Timed<FplFixtureResponse[]> | null = null
+let allFixtureInflight: Promise<FplFixtureResponse[]> | null = null
 const squadCache = new Map<string, Timed<FplSquadView>>()
 const squadInflight = new Map<string, Promise<FplSquadView>>()
 
@@ -115,6 +118,32 @@ export async function getGameweekFixtures(gameweek: number) {
     fixtureInflight.set(gameweek, inflight)
   }
   return inflight
+}
+
+export async function getAllFixtures() {
+  if (isFresh(allFixtureCache, ALL_FIXTURES_TTL_MS) && allFixtureCache) {
+    return allFixtureCache.data
+  }
+
+  if (!allFixtureInflight) {
+    allFixtureInflight = fplFetch<FplFixtureResponse[]>('/fixtures/')
+      .then((payload) => {
+        const data = payload ?? []
+        allFixtureCache = { at: Date.now(), data }
+        return data
+      })
+      .finally(() => {
+        allFixtureInflight = null
+      })
+  }
+
+  try {
+    return await allFixtureInflight
+  }
+  catch (error) {
+    if (allFixtureCache) return allFixtureCache.data
+    throw error
+  }
 }
 
 export async function getLiveStats(gameweek: number) {

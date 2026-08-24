@@ -30,6 +30,14 @@
   --ucl-qualify: #f5c542;
   --ucl-eliminated: #5a6578;
 
+  /* FPL fixture difficulty 1 (easiest) → 5 (hardest) */
+  --ucl-fdr-1: #157347;
+  --ucl-fdr-2: #3ddc84;
+  --ucl-fdr-3: #4b5874;
+  --ucl-fdr-4: #e85d4c;
+  --ucl-fdr-5: #9f1239;
+  --ucl-fdr-blank: #1a2744;
+
   /* Typography */
   --ucl-font-display: 'Cinzel', ui-serif, Georgia, serif;
   --ucl-font-stats: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
@@ -101,6 +109,12 @@
   --color-final: var(--ucl-final);
   --color-qualify: var(--ucl-qualify);
   --color-eliminated: var(--ucl-eliminated);
+  --color-fdr-1: var(--ucl-fdr-1);
+  --color-fdr-2: var(--ucl-fdr-2);
+  --color-fdr-3: var(--ucl-fdr-3);
+  --color-fdr-4: var(--ucl-fdr-4);
+  --color-fdr-5: var(--ucl-fdr-5);
+  --color-fdr-blank: var(--ucl-fdr-blank);
   --color-group-a: var(--ucl-group-a);
   --color-group-b: var(--ucl-group-b);
   --color-group-c: var(--ucl-group-c);

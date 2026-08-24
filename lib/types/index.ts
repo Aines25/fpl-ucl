@@ -41,3 +41,12 @@ export type {
   SquadMove,
   SquadSlot,
 } from './squad'
+
+export type {
+  FdrCell,
+  FdrGrid,
+  FdrOpponent,
+  FdrRating,
+  FdrSort,
+  FdrTeamRow,
+} from './fdr'
