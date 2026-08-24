@@ -17,6 +17,6 @@ export default cachedEventHandler(
     maxAge: 45,
     swr: true,
     staleMaxAge: 60 * 10,
-    getKey: (event) => `fpl:squad:v2:${getRouterParam(event, 'id')}:${getRouterParam(event, 'gw')}`,
+    getKey: (event) => `fpl:squad:v3:${getRouterParam(event, 'id')}:${getRouterParam(event, 'gw')}`,
   },
 )

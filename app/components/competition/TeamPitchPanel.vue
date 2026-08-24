@@ -1,19 +1,51 @@
 <script setup lang="ts">
-import type { FplSquadView } from '../../../lib/types/squad'
+import type { FplSquadView, SquadSlot } from '../../../lib/types/squad'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   squad?: FplSquadView
   loading?: boolean
   error?: unknown
   size?: 'sm' | 'md'
   scoring?: 'competition' | 'official'
   layout?: 'stack' | 'split'
+  nextOpponentId?: number | null
 }>(), {
   loading: false,
   size: 'md',
   scoring: 'competition',
   layout: 'stack',
+  nextOpponentId: null,
 })
+
+const selected = ref<SquadSlot | null>(null)
+const gameweek = computed(() => props.squad?.gameweek ?? 0)
+const { ownership, status: ownershipStatus } = useLeagueOwnership(gameweek)
+
+const matchedOwnership = computed(() => {
+  if (!props.squad || ownership.value?.gameweek !== props.squad.gameweek) return undefined
+  return ownership.value
+})
+
+watch(
+  () => `${props.squad?.managerId ?? ''}:${props.squad?.fplId ?? ''}:${props.squad?.gameweek ?? ''}`,
+  () => {
+    selected.value = null
+  },
+)
+
+watch(
+  () => props.squad,
+  (squad) => {
+    if (!selected.value || !squad) return
+    const next = [...squad.starters, ...squad.bench]
+      .find((slot) => slot.elementId === selected.value?.elementId)
+    if (next) selected.value = next
+  },
+)
+
+function selectPlayer(player: SquadSlot) {
+  selected.value = player
+}
 </script>
 
 <template>
@@ -41,7 +73,24 @@ withDefaults(defineProps<{
         <TeamTransfers v-if="squad" :squad="squad" />
         <TeamChips v-if="squad" :squad="squad" />
       </div>
-      <PitchView :squad="squad" :size="size" />
+      <PitchView
+        :squad="squad"
+        :size="size"
+        :selected-element-id="selected?.elementId"
+        @select="selectPlayer"
+      />
     </div>
+
+    <PlayerDetailSheet
+      :player="selected"
+      :ownership="matchedOwnership"
+      :ownership-pending="ownershipStatus === 'pending'"
+      :current-manager-id="squad?.managerId ?? null"
+      :current-entry-id="squad?.fplId ?? null"
+      :next-opponent-id="nextOpponentId"
+      :chip="squad?.chip ?? null"
+      :scoring="scoring"
+      @close="selected = null"
+    />
   </div>
 </template>

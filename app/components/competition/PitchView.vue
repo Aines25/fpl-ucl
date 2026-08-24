@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import type { FplSquadView } from '../../../lib/types/squad'
+import type { FplSquadView, SquadSlot } from '../../../lib/types/squad'
 import { groupStartersByLine } from '../../../lib/engine/squad'
 
 const props = withDefaults(defineProps<{
   squad?: FplSquadView
   size?: 'sm' | 'md'
+  selectedElementId?: number | null
 }>(), {
   size: 'md',
+  selectedElementId: null,
 })
+
+const emit = defineEmits<{
+  select: [player: SquadSlot]
+}>()
 
 const lines = computed(() => groupStartersByLine(props.squad?.starters ?? []))
 </script>
@@ -27,16 +33,44 @@ const lines = computed(() => groupStartersByLine(props.squad?.starters ?? []))
         :style="{ minHeight: size === 'sm' ? '22rem' : '26rem' }"
       >
         <div class="flex justify-evenly">
-          <PitchPlayer v-for="player in lines.fwd" :key="player.elementId" :player="player" :size="size" />
+          <PitchPlayer
+            v-for="player in lines.fwd"
+            :key="player.elementId"
+            :player="player"
+            :size="size"
+            :selected="selectedElementId === player.elementId"
+            @select="emit('select', $event)"
+          />
         </div>
         <div class="flex justify-evenly">
-          <PitchPlayer v-for="player in lines.mid" :key="player.elementId" :player="player" :size="size" />
+          <PitchPlayer
+            v-for="player in lines.mid"
+            :key="player.elementId"
+            :player="player"
+            :size="size"
+            :selected="selectedElementId === player.elementId"
+            @select="emit('select', $event)"
+          />
         </div>
         <div class="flex justify-evenly">
-          <PitchPlayer v-for="player in lines.def" :key="player.elementId" :player="player" :size="size" />
+          <PitchPlayer
+            v-for="player in lines.def"
+            :key="player.elementId"
+            :player="player"
+            :size="size"
+            :selected="selectedElementId === player.elementId"
+            @select="emit('select', $event)"
+          />
         </div>
         <div class="flex justify-evenly">
-          <PitchPlayer v-for="player in lines.gkp" :key="player.elementId" :player="player" :size="size" />
+          <PitchPlayer
+            v-for="player in lines.gkp"
+            :key="player.elementId"
+            :player="player"
+            :size="size"
+            :selected="selectedElementId === player.elementId"
+            @select="emit('select', $event)"
+          />
         </div>
       </div>
       <p
@@ -52,7 +86,14 @@ const lines = computed(() => groupStartersByLine(props.squad?.starters ?? []))
         Substitutes
       </p>
       <div class="flex justify-evenly gap-2">
-        <PitchPlayer v-for="player in squad.bench" :key="player.elementId" :player="player" :size="size" />
+        <PitchPlayer
+          v-for="player in squad.bench"
+          :key="player.elementId"
+          :player="player"
+          :size="size"
+          :selected="selectedElementId === player.elementId"
+          @select="emit('select', $event)"
+        />
       </div>
     </div>
   </div>

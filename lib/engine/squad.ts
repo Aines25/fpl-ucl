@@ -1,3 +1,4 @@
+import { gameweekBreakdownFromStats } from './live'
 import type { CataloguePlayer, ChipBalance, ChipPlay, ClubFixture, ElementType, FplSquadView, LivePlayerStats, SquadMove, SquadSlot } from '../types/squad'
 
 export interface SquadPick {
@@ -90,6 +91,13 @@ export function playerShirtUrl(teamCode: number, isGoalkeeper: boolean) {
 export function chipLabel(chip: string | null | undefined) {
   if (!chip) return null
   return CHIP_LABELS[chip] ?? chip.replaceAll('_', ' ')
+}
+
+export function elementTypeLabel(type: ElementType) {
+  if (type === 1) return 'GK'
+  if (type === 2) return 'DEF'
+  if (type === 3) return 'MID'
+  return 'FWD'
 }
 
 /**
@@ -234,6 +242,7 @@ function slotFromPick(
     photoUrl: playerPhotoUrl(player?.code ?? 0),
     shirtUrl: playerShirtUrl(player?.teamCode ?? 0, elementType === 1),
     fixture: teamId ? fixtures.get(teamId) ?? null : null,
+    breakdown: gameweekBreakdownFromStats(stats ?? { minutes: 0, points: 0 }, elementType),
   }
 }
 

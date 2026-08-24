@@ -195,7 +195,7 @@ export async function getSquadByEntry(input: {
     return emptySquad(managerId, 0, name, gameweek)
   }
 
-  const key = `entry:v4:${fplId}:${gameweek}`
+  const key = `entry:v5:${fplId}:${gameweek}`
   const cached = squadCache.get(key)
   if (isFresh(cached, SQUAD_TTL_MS) && cached) return cached.data
 

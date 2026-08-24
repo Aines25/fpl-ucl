@@ -4,9 +4,15 @@ import type { SquadSlot } from '../../../lib/types/squad'
 const props = withDefaults(defineProps<{
   player: SquadSlot
   size?: 'sm' | 'md'
+  selected?: boolean
 }>(), {
   size: 'md',
+  selected: false,
 })
+
+const emit = defineEmits<{
+  select: [player: SquadSlot]
+}>()
 
 const src = ref(props.player.photoUrl || props.player.shirtUrl)
 
@@ -34,11 +40,17 @@ const badge = computed(() => {
 </script>
 
 <template>
-  <div
+  <button
+    type="button"
     :class="[
-      'flex flex-col items-center text-center',
-      size === 'sm' ? 'w-12 sm:w-14' : 'w-14 sm:w-16',
+      'flex cursor-pointer flex-col items-center rounded-sm text-center hover:bg-white/10',
+      size === 'sm' ? 'w-12 px-0.5 py-1 sm:w-14' : 'w-14 px-0.5 py-1 sm:w-16',
+      selected ? 'bg-cyan/15 ring-1 ring-cyan/50' : '',
     ]"
+    :aria-pressed="selected"
+    aria-haspopup="dialog"
+    :aria-label="`${player.webName}, ${player.points} ${player.points === 1 ? 'point' : 'points'}`"
+    @click.stop="emit('select', player)"
   >
     <div class="relative">
       <div
@@ -50,7 +62,7 @@ const badge = computed(() => {
         <img
           v-if="src"
           :src="src"
-          :alt="player.webName"
+          alt=""
           class="size-full object-contain object-bottom"
           loading="lazy"
           referrerpolicy="no-referrer"
@@ -86,5 +98,5 @@ const badge = computed(() => {
     >
       {{ player.webName }}
     </p>
-  </div>
+  </button>
 </template>

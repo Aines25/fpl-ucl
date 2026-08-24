@@ -12,6 +12,9 @@ import {
   ownershipFromPicks,
   paginateFeed,
   rankLiveStandings,
+  signedPointsLabel,
+  splitOwners,
+  breakdownLineLabel,
   stampFeedEvents,
 } from '../lib/engine/live'
 import type { CataloguePlayer, ClubInfo, LivePlayerStats } from '../lib/types/squad'
@@ -358,8 +361,8 @@ describe('ownership', () => {
   it('lists every manager who owns a player, captains first', () => {
     const owners = ownershipFromPicks(
       [
-        { entryId: 1, playerName: 'Ada', entryName: 'XI' },
-        { entryId: 2, playerName: 'Ben', entryName: 'FC' },
+        { entryId: 1, playerName: 'Ada', entryName: 'XI', competitionPlayerId: 16 },
+        { entryId: 2, playerName: 'Ben', entryName: 'FC', competitionPlayerId: null },
       ],
       new Map([
         [1, { captain: 'Haaland', viceCaptain: 'Saka', transfers: 0, transferCost: 0, chip: null, picks: [pick(9, 9, { isCaptain: true, multiplier: 2 })] }],
@@ -367,9 +370,60 @@ describe('ownership', () => {
       ]),
     )
     expect(owners[9]).toEqual([
-      { entryId: 1, playerName: 'Ada', entryName: 'XI', isCaptain: true, isViceCaptain: false, onBench: false },
-      { entryId: 2, playerName: 'Ben', entryName: 'FC', isCaptain: false, isViceCaptain: false, onBench: true },
+      { entryId: 1, playerName: 'Ada', entryName: 'XI', isCaptain: true, isViceCaptain: false, onBench: false, competitionPlayerId: 16 },
+      { entryId: 2, playerName: 'Ben', entryName: 'FC', isCaptain: false, isViceCaptain: false, onBench: true, competitionPlayerId: null },
     ])
+  })
+})
+
+describe('splitOwners', () => {
+  const ada = {
+    entryId: 1,
+    playerName: 'Ada',
+    entryName: 'XI',
+    isCaptain: true,
+    isViceCaptain: false,
+    onBench: false,
+    competitionPlayerId: 16,
+  }
+  const jack = {
+    entryId: 3,
+    playerName: 'Jack',
+    entryName: 'JK',
+    isCaptain: false,
+    isViceCaptain: false,
+    onBench: false,
+    competitionPlayerId: 14,
+  }
+  const ben = {
+    entryId: 2,
+    playerName: 'Ben',
+    entryName: 'FC',
+    isCaptain: false,
+    isViceCaptain: false,
+    onBench: true,
+    competitionPlayerId: null,
+  }
+
+  it('splits this team, group-mates, other UCL managers and the rest of the mini-league', () => {
+    expect(splitOwners([ada, jack, ben], {
+      currentManagerId: 16,
+      groupMateIds: [13, 14, 15, 16],
+    })).toEqual({
+      thisTeam: ada,
+      groupMates: [jack],
+      ucl: [],
+      league: [ben],
+    })
+  })
+})
+
+describe('breakdown labels', () => {
+  it('labels stacked actions except bonus', () => {
+    expect(breakdownLineLabel({ identifier: 'goals_scored', label: 'Goal', count: 2 })).toBe('2× Goal')
+    expect(breakdownLineLabel({ identifier: 'bonus', label: 'Bonus', count: 3 })).toBe('Bonus')
+    expect(signedPointsLabel(4)).toBe('+4 pts')
+    expect(signedPointsLabel(-1)).toBe('-1 pts')
   })
 })
 

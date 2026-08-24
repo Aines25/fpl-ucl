@@ -7,7 +7,8 @@ import {
   rankLiveStandings,
   stampFeedEvents,
 } from '../../lib/engine/live'
-import type { LiveFeedEvent, LiveLeagueTable } from '../../lib/types/league'
+import type { FplEventState } from '../../lib/types/competition'
+import type { LeagueOwnership, LiveFeedEvent, LiveLeagueTable } from '../../lib/types/league'
 import { isFresh, readSharedCache, writeSharedCache, type Timed } from './cache'
 import { getClassicLeague, getLeagueEntryPicks } from './league'
 import { getBootstrap } from './scores'
@@ -118,4 +119,48 @@ export async function getLiveLeague() {
 
   if (liveMemory) return liveMemory.data
   return liveInflight
+}
+
+function eventForGameweek(events: FplEventState[], gameweek: number): FplEventState {
+  return events.find((event) => event.id === gameweek) ?? {
+    id: gameweek,
+    name: `Gameweek ${gameweek}`,
+    isCurrent: false,
+    isNext: false,
+    finished: true,
+    dataChecked: true,
+    deadlineTime: null,
+  }
+}
+
+function ownershipSummary(
+  gameweek: number,
+  standings: LiveLeagueTable['standings'],
+  picksComplete: boolean,
+  ownersByPlayer: LeagueOwnership['ownersByPlayer'],
+): LeagueOwnership {
+  return {
+    gameweek,
+    managerCount: standings.filter((row) => row.entryId > 0).length,
+    uclCount: standings.filter((row) => row.competitionPlayerId != null).length,
+    picksComplete,
+    ownersByPlayer,
+  }
+}
+
+export async function getLeagueOwnership(gameweek: number): Promise<LeagueOwnership> {
+  const bootstrap = await getBootstrap()
+  if (bootstrap.current?.id === gameweek) {
+    const live = await getLiveLeague()
+    return ownershipSummary(live.gameweek, live.standings, live.picksComplete, live.ownersByPlayer)
+  }
+
+  const table = await getClassicLeague()
+  const picksByEntry = await getLeagueEntryPicks(table.standings, eventForGameweek(bootstrap.events, gameweek))
+  return ownershipSummary(
+    gameweek,
+    table.standings,
+    table.standings.every((row) => row.entryId <= 0 || Boolean(picksByEntry.get(row.entryId)?.picks.length)),
+    ownershipFromPicks(table.standings, picksByEntry),
+  )
 }

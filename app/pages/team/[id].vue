@@ -79,6 +79,7 @@ useHead({
     <TeamPitchPanel
       :squad="squad"
       :loading="loading"
+      :next-opponent-id="nextOpponent?.id ?? null"
     />
   </div>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronDown } from '@lucide/vue'
-import { FEED_PAGE_SIZE, formatFeedTime, paginateFeed } from '../../../lib/engine/live'
+import { breakdownLineLabel, FEED_PAGE_SIZE, formatFeedTime, paginateFeed, signedPointsLabel } from '../../../lib/engine/live'
 import type { LiveFeedEvent, LiveOwner } from '../../../lib/types/league'
 
 const props = defineProps<{
@@ -27,17 +27,8 @@ function loadAll() {
   showAll.value = true
 }
 
-function pointsLabel(points: number) {
-  return points > 0 ? `+${points} pts` : `${points} pts`
-}
-
 function gameweekPointsLabel(points: number) {
   return `${points} pts this GW`
-}
-
-function breakdownLabel(line: { identifier: string, label: string, count: number }) {
-  if (line.count <= 1 || line.identifier === 'bonus') return line.label
-  return `${line.count}× ${line.label}`
 }
 </script>
 
@@ -84,7 +75,7 @@ function breakdownLabel(line: { identifier: string, label: string, count: number
               class="text-right font-stats text-label lg:shrink-0"
               :class="event.points < 0 ? 'text-live' : 'text-final'"
             >
-              {{ event.label }} {{ pointsLabel(event.points) }}
+              {{ event.label }} {{ signedPointsLabel(event.points) }}
             </p>
           </div>
         </button>
@@ -105,12 +96,12 @@ function breakdownLabel(line: { identifier: string, label: string, count: number
                 :key="line.identifier"
                 class="flex items-baseline justify-between gap-3 text-sm"
               >
-                <span class="text-silver">{{ breakdownLabel(line) }}</span>
+                <span class="text-silver">{{ breakdownLineLabel(line) }}</span>
                 <span
                   class="font-stats text-label"
                   :class="line.points < 0 ? 'text-live' : 'text-final'"
                 >
-                  {{ pointsLabel(line.points) }}
+                  {{ signedPointsLabel(line.points) }}
                 </span>
               </li>
             </ul>
@@ -118,26 +109,10 @@ function breakdownLabel(line: { identifier: string, label: string, count: number
           <p class="mb-2 font-stats text-kicker tracking-kicker text-silver uppercase">
             Owned by {{ ownersFor(event.elementId).length }}
           </p>
-          <p v-if="!ownersFor(event.elementId).length" class="text-sm text-silver-dim">
-            Nobody in this league owns {{ event.webName }}.
-          </p>
-          <ul v-else class="space-y-1.5">
-            <li
-              v-for="owner in ownersFor(event.elementId)"
-              :key="owner.entryId"
-              class="flex items-baseline justify-between gap-3 text-sm"
-            >
-              <span>
-                <span class="text-white">{{ owner.playerName }}</span>
-                <span class="ml-2 text-silver-dim">{{ owner.entryName }}</span>
-              </span>
-              <span class="font-stats text-kicker tracking-kicker uppercase text-silver">
-                <span v-if="owner.isCaptain" class="text-cyan">C</span>
-                <span v-else-if="owner.isViceCaptain" class="text-silver-dim">V</span>
-                <span v-if="owner.onBench" class="ml-1 text-silver-dim">Bench</span>
-              </span>
-            </li>
-          </ul>
+          <PlayerOwnersList
+            :owners="ownersFor(event.elementId)"
+            :empty-label="`Nobody in this league owns ${event.webName}.`"
+          />
         </div>
       </li>
     </ul>

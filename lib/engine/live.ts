@@ -169,7 +169,7 @@ export function rankLiveStandings(rows: LeagueStandingRow[]) {
 }
 
 export function ownershipFromPicks(
-  standings: Array<Pick<LeagueStandingRow, 'entryId' | 'playerName' | 'entryName'>>,
+  standings: Array<Pick<LeagueStandingRow, 'entryId' | 'playerName' | 'entryName' | 'competitionPlayerId'>>,
   picksByEntry: Map<number, LeagueEntryPicks>,
 ) {
   const owners = new Map<number, LiveOwner[]>()
@@ -185,6 +185,7 @@ export function ownershipFromPicks(
         isCaptain: pick.isCaptain,
         isViceCaptain: pick.isViceCaptain,
         onBench: pick.position > 11 && extras.chip !== 'bboost',
+        competitionPlayerId: row.competitionPlayerId ?? null,
       })
       owners.set(pick.element, list)
     }
@@ -199,6 +200,40 @@ export function ownershipFromPicks(
     })
   }
   return payload
+}
+
+export function splitOwners(
+  owners: LiveOwner[],
+  options: {
+    currentManagerId?: number | null
+    currentEntryId?: number | null
+    groupMateIds?: Iterable<number>
+  } = {},
+) {
+  const group = new Set(options.groupMateIds ?? [])
+  const isCurrent = (owner: LiveOwner) => {
+    if (options.currentManagerId && owner.competitionPlayerId === options.currentManagerId) return true
+    if (options.currentEntryId && owner.entryId === options.currentEntryId) return true
+    return false
+  }
+
+  const thisTeam = owners.find(isCurrent) ?? null
+  const others = owners.filter((owner) => !isCurrent(owner))
+  return {
+    thisTeam,
+    groupMates: others.filter((owner) => owner.competitionPlayerId && group.has(owner.competitionPlayerId)),
+    ucl: others.filter((owner) => owner.competitionPlayerId && !group.has(owner.competitionPlayerId)),
+    league: others.filter((owner) => !owner.competitionPlayerId),
+  }
+}
+
+export function breakdownLineLabel(line: { identifier: string, label: string, count: number }) {
+  if (line.count <= 1 || line.identifier === 'bonus') return line.label
+  return `${line.count}× ${line.label}`
+}
+
+export function signedPointsLabel(points: number) {
+  return points > 0 ? `+${points} pts` : `${points} pts`
 }
 
 function stat(live: LivePlayerStats | undefined, key: keyof LivePlayerStats) {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   chipLabel,
   competitionChipAdjustment,
+  elementTypeLabel,
   emptySquad,
   formationFromTypes,
   formatTeamValue,
@@ -42,6 +43,8 @@ describe('squad helpers', () => {
     expect(chipLabel('3xc')).toBe('Triple Captain')
     expect(chipLabel('bboost')).toBe('Bench Boost')
     expect(chipLabel(null)).toBeNull()
+    expect(elementTypeLabel(1)).toBe('GK')
+    expect(elementTypeLabel(4)).toBe('FWD')
   })
 
   it('only strips bench boost and extra triple captain points', () => {
@@ -171,6 +174,10 @@ describe('squad helpers', () => {
     expect(captain?.counting).toBe(true)
     expect(captain?.teamId).toBe(4)
     expect(captain?.fixture).toBeNull()
+    expect(captain?.breakdown).toEqual([
+      { identifier: 'minutes', label: 'Minutes', count: 1, points: 2 },
+      { identifier: 'other', label: 'Other', count: 1, points: 6 },
+    ])
 
     expect(squad.bench[0]?.points).toBe(2)
     expect(squad.bench[0]?.counting).toBe(false)

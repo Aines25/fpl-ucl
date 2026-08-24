@@ -21,6 +21,7 @@ export type {
 export type {
   ClassicLeagueTable,
   LeagueEntryPicks,
+  LeagueOwnership,
   LeaguePick,
   LeagueStandingRow,
   LiveFeedBreakdownLine,
@@ -38,6 +39,7 @@ export type {
   ElementType,
   FplSquadView,
   LivePlayerStats,
+  PlayerBreakdownLine,
   SquadMove,
   SquadSlot,
 } from './squad'

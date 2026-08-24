@@ -19,6 +19,7 @@ function slot(partial: Partial<SquadSlot> & Pick<SquadSlot, 'elementId' | 'webNa
     photoUrl: '',
     shirtUrl: '',
     fixture: null,
+    breakdown: [],
     ...partial,
   }
 }

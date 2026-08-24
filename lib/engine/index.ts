@@ -7,6 +7,7 @@ export { drawOpen, drawRoundOf16 } from './draw'
 export {
   chipHalf,
   chipLabel,
+  elementTypeLabel,
   CHIP_RESET_GAMEWEEK,
   competitionChipAdjustment,
   competitionGameweekPoints,
@@ -60,6 +61,9 @@ export {
   liveStandingTotals,
   mergeFeedEvents,
   ownershipFromPicks,
+  splitOwners,
+  breakdownLineLabel,
+  signedPointsLabel,
   playerMatchState,
   rankLiveStandings,
   stampFeedEvents,

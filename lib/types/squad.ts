@@ -38,6 +38,13 @@ export interface ClubFixture {
   finished: boolean
 }
 
+export interface PlayerBreakdownLine {
+  identifier: string
+  label: string
+  count: number
+  points: number
+}
+
 export interface SquadSlot {
   elementId: number
   pickPosition: number
@@ -55,6 +62,7 @@ export interface SquadSlot {
   photoUrl: string
   shirtUrl: string
   fixture: ClubFixture | null
+  breakdown: PlayerBreakdownLine[]
 }
 
 export interface SquadMove {

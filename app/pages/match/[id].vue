@@ -85,11 +85,13 @@ useSeoMeta({
         :squad="homeSquad"
         :loading="homeLoading"
         size="sm"
+        :next-opponent-id="away.id"
       />
       <TeamPitchPanel
         :squad="awaySquad"
         :loading="awayLoading"
         size="sm"
+        :next-opponent-id="home.id"
       />
     </div>
   </div>

@@ -43,6 +43,15 @@ export interface LiveOwner {
   isCaptain: boolean
   isViceCaptain: boolean
   onBench: boolean
+  competitionPlayerId: number | null
+}
+
+export interface LeagueOwnership {
+  gameweek: number
+  managerCount: number
+  uclCount: number
+  picksComplete: boolean
+  ownersByPlayer: Record<number, LiveOwner[]>
 }
 
 export interface LiveFeedBreakdownLine {
