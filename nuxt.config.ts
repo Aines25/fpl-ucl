@@ -1,9 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 
-const cloudflareBuild = process.argv.includes('cloudflare-module')
-  || process.env.NITRO_PRESET === 'cloudflare-module'
-
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -35,13 +32,6 @@ export default defineNuxtConfig({
   },
   vite: {
     plugins: [tailwindcss()],
-    resolve: cloudflareBuild
-      ? undefined
-      : {
-          alias: {
-            '@takumi-rs/wasm/next': '@takumi-rs/wasm/node',
-          },
-        },
   },
   app: {
     head: {
@@ -71,11 +61,6 @@ export default defineNuxtConfig({
       esmImport: true,
     },
     minify: false,
-    alias: cloudflareBuild
-      ? undefined
-      : {
-          '@takumi-rs/wasm/next': '@takumi-rs/wasm/node',
-        },
     cloudflare: {
       nodeCompat: true,
       deployConfig: true,

@@ -2,39 +2,67 @@
 import { Check, Download, Share2 } from '@lucide/vue'
 
 const props = defineProps<{
-  href: string
-  filename: string
+  href?: string
+  filename?: string
+  items?: Array<{ href: string, filename: string }>
   label?: string
 }>()
 
 const busy = ref(false)
 const copied = ref(false)
 const canShare = computed(() => import.meta.client && typeof navigator !== 'undefined' && Boolean(navigator.share && navigator.canShare))
+const specs = computed(() => {
+  if (props.items?.length) return props.items
+  if (props.href && props.filename) return [{ href: props.href, filename: props.filename }]
+  return []
+})
 
-async function fileFromHref() {
-  const response = await fetch(props.href)
-  if (!response.ok) throw new Error('Could not build image')
-  const blob = await response.blob()
-  return new File([blob], props.filename, { type: 'image/png' })
+async function filesFromSpecs() {
+  const results = await Promise.all(specs.value.map(async (spec) => {
+    const response = await fetch(spec.href)
+    if (!response.ok) return null
+    const blob = await response.blob()
+    return new File([blob], spec.filename, { type: 'image/png' })
+  }))
+  const files = results.filter((file): file is File => file != null)
+  if (!files.length) throw new Error('Could not build image')
+  return files
 }
 
-async function shareImage() {
-  busy.value = true
-  try {
-    const file = await fileFromHref()
-    if (canShare.value) {
-      const payload = { files: [file], title: props.filename }
-      if (navigator.canShare?.(payload)) {
-        await navigator.share(payload)
-        return
-      }
-    }
+function isAbort(error: unknown) {
+  return error instanceof DOMException && error.name === 'AbortError'
+}
+
+async function downloadFiles(files: File[]) {
+  for (const [index, file] of files.entries()) {
     const url = URL.createObjectURL(file)
     const link = document.createElement('a')
     link.href = url
-    link.download = props.filename
+    link.download = file.name
     link.click()
     URL.revokeObjectURL(url)
+    if (index < files.length - 1) await new Promise((resolve) => setTimeout(resolve, 400))
+  }
+}
+
+async function shareImage() {
+  if (!specs.value.length) return
+  busy.value = true
+  try {
+    const files = await filesFromSpecs()
+    if (canShare.value) {
+      const payload = { files, title: files[0]?.name ?? 'share.png' }
+      if (navigator.canShare?.(payload)) {
+        try {
+          await navigator.share(payload)
+          return
+        }
+        catch (error) {
+          if (isAbort(error)) return
+        }
+      }
+    }
+    await downloadFiles(files)
     copied.value = true
     setTimeout(() => {
       copied.value = false

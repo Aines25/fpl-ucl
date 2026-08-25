@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { activeCompetitionIds } from '../../lib/engine/qualification'
+import { leagueShareImageParts } from '../../lib/engine/share-cards'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const { league, status } = useLeague()
@@ -55,6 +56,7 @@ const stillInUcl = computed(() => {
   if (!snapshot.value?.standings) return new Set<number>()
   return activeCompetitionIds(snapshot.value.standings, snapshot.value.knockout ?? [])
 })
+const leagueImageParts = leagueShareImageParts()
 
 useHead({
   title: 'League · Champions League',
@@ -63,9 +65,9 @@ useHead({
 useSeoMeta({
   ogTitle: () => league.value?.name ?? 'Classic league',
   ogDescription: 'Overall FPL mini-league standings, including managers outside the Champions League groups.',
-  ogImage: () => `${requestUrl.origin}/api/og/league`,
+  ogImage: () => `${requestUrl.origin}/api/og/league?part=1`,
   twitterCard: 'summary_large_image',
-  twitterImage: () => `${requestUrl.origin}/api/og/league`,
+  twitterImage: () => `${requestUrl.origin}/api/og/league?part=1`,
 })
 
 function toggleRow(entryId: number, source: ExpandedSource) {
@@ -95,8 +97,7 @@ watch(tab, () => {
 
     <div class="mb-6 flex flex-wrap justify-end gap-2">
       <ShareImageButton
-        href="/api/og/league"
-        filename="league.png"
+        :items="leagueImageParts"
         label="League image"
       />
     </div>

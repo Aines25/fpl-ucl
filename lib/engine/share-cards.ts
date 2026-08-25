@@ -9,10 +9,17 @@ export function shareDimensions(size: ShareSize) {
   return { width: 1200, height: 630 }
 }
 
+export const LEAGUE_SHARE_PARTS = 3
+const LEAGUE_SHARE_COMFORTABLE_ROWS = 24
+
+export function leagueShareComfortable(rowCount: number) {
+  return rowCount <= LEAGUE_SHARE_COMFORTABLE_ROWS
+}
+
 export function leagueShareDimensions(rowCount: number) {
   const width = 1080
   const header = 118
-  const rowHeight = 30
+  const rowHeight = leagueShareComfortable(rowCount) ? 42 : 30
   const padding = 56
   const height = header + padding + (rowCount + 1) * rowHeight
   return { width, height: Math.max(720, Math.min(4096, height)) }
@@ -136,6 +143,23 @@ export interface ShareLeagueCard {
   title: string
   kicker: string
   rows: ShareLeagueRow[]
+}
+
+export function leagueShareParts(card: ShareLeagueCard, partCount = LEAGUE_SHARE_PARTS): ShareLeagueCard[] {
+  const size = Math.ceil(Math.max(card.rows.length, 1) / partCount)
+  const parts = Array.from({ length: partCount }, (_, index) => ({
+    title: card.title,
+    kicker: `${card.kicker} · ${index + 1}/${partCount}`,
+    rows: card.rows.slice(index * size, (index + 1) * size),
+  })).filter((part) => part.rows.length > 0)
+  return parts.length ? parts : [{ title: card.title, kicker: `${card.kicker} · 1/${partCount}`, rows: [] }]
+}
+
+export function leagueShareImageParts(partCount = LEAGUE_SHARE_PARTS) {
+  return Array.from({ length: partCount }, (_, index) => ({
+    href: `/api/og/league?part=${index + 1}`,
+    filename: `league-${index + 1}.png`,
+  }))
 }
 
 function joinNames(names: string[] | null | undefined) {

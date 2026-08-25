@@ -1,8 +1,7 @@
 import init, { Renderer } from '@takumi-rs/wasm'
-import wasmModule from '@takumi-rs/wasm/next'
 import { container, googleFonts, text, type Node } from '@takumi-rs/helpers'
 import type { ShareGroupsCard, ShareLeagueCard, ShareMatchCard, ShareMatchdayCard, ShareSize } from '../../lib/engine/share-cards'
-import { shareDimensions } from '../../lib/engine/share-cards'
+import { leagueShareComfortable, shareDimensions } from '../../lib/engine/share-cards'
 
 const COLORS = {
   navy: '#050b1a',
@@ -27,6 +26,16 @@ const GROUP_COLORS: Record<string, string> = {
 let rendererPromise: Promise<Renderer> | null = null
 
 async function loadTakumiWasm() {
+  // Node cannot import the .wasm file as an ESM module (it looks for a sibling
+  // takumi_wasm_bg.js). Read the bytes in dev; Cloudflare gets the compiled module.
+  if (import.meta.dev) {
+    const { readFileSync } = await import('node:fs')
+    const { createRequire } = await import('node:module')
+    const require = createRequire(import.meta.url)
+    await init({ module_or_path: readFileSync(require.resolve('@takumi-rs/wasm/takumi_wasm_bg.wasm')) })
+    return
+  }
+  const { default: wasmModule } = await import('@takumi-rs/wasm/next')
   await init({ module_or_path: wasmModule })
 }
 
@@ -347,16 +356,21 @@ function leagueCell(label: string, opts: { color?: string, align?: 'left' | 'rig
 }
 
 export function leagueNode(card: ShareLeagueCard): Node {
+  const comfortable = leagueShareComfortable(card.rows.length)
+  const headerSize = comfortable ? 14 : 12
+  const cellSize = comfortable ? 18 : 15
+  const nameSize = comfortable ? 20 : 16
+  const chipSize = comfortable ? 13 : 11
   const header = [
-    leagueCell('#', { color: COLORS.silver, size: 12, weight: 700 }),
-    leagueCell('Manager', { color: COLORS.silver, size: 12, weight: 700 }),
-    leagueCell('C', { color: COLORS.silver, size: 12, weight: 700 }),
-    leagueCell('In', { color: COLORS.silver, size: 12, weight: 700 }),
-    leagueCell('Out', { color: COLORS.silver, size: 12, weight: 700 }),
-    leagueCell('FT', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
-    leagueCell('Hit', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
-    leagueCell('GW', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
-    leagueCell('Tot', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
+    leagueCell('#', { color: COLORS.silver, size: headerSize, weight: 700 }),
+    leagueCell('Manager', { color: COLORS.silver, size: headerSize, weight: 700 }),
+    leagueCell('C', { color: COLORS.silver, size: headerSize, weight: 700 }),
+    leagueCell('In', { color: COLORS.silver, size: headerSize, weight: 700 }),
+    leagueCell('Out', { color: COLORS.silver, size: headerSize, weight: 700 }),
+    leagueCell('FT', { color: COLORS.silver, size: headerSize, weight: 700, align: 'right' }),
+    leagueCell('Hit', { color: COLORS.silver, size: headerSize, weight: 700, align: 'right' }),
+    leagueCell('GW', { color: COLORS.silver, size: headerSize, weight: 700, align: 'right' }),
+    leagueCell('Tot', { color: COLORS.silver, size: headerSize, weight: 700, align: 'right' }),
   ]
   const gridColumns = '36px minmax(0, 1.2fr) 88px minmax(0, 1fr) minmax(0, 1fr) 36px 40px 44px 48px'
   return container({
@@ -366,20 +380,20 @@ export function leagueNode(card: ShareLeagueCard): Node {
       display: 'flex',
       flexDirection: 'column',
       backgroundColor: COLORS.navy,
-      padding: 28,
-      gap: 16,
+      padding: comfortable ? 32 : 28,
+      gap: comfortable ? 20 : 16,
     },
     children: [
       container({
         style: { display: 'flex', flexDirection: 'column', gap: 4 },
-        children: [kicker(card.kicker), title(card.title, 28)],
+        children: [kicker(card.kicker), title(card.title, comfortable ? 32 : 28)],
       }),
       container({
         style: {
           display: 'grid',
           gridTemplateColumns: gridColumns,
           columnGap: 8,
-          rowGap: 6,
+          rowGap: comfortable ? 10 : 6,
           alignItems: 'center',
           width: '100%',
         },
@@ -388,23 +402,23 @@ export function leagueNode(card: ShareLeagueCard): Node {
           ...card.rows.flatMap((row) => {
             const color = row.inUcl ? COLORS.star : COLORS.white
             return [
-              leagueCell(String(row.rank), { color: COLORS.silver, align: 'left' }),
+              leagueCell(String(row.rank), { color: COLORS.silver, align: 'left', size: cellSize }),
               container({
                 style: { display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' },
                 children: [
-                  leagueCell(row.name, { color, size: 16 }),
+                  leagueCell(row.name, { color, size: nameSize }),
                   ...(row.chip
-                    ? [leagueCell(row.chip, { color: COLORS.cyan, size: 11, weight: 700 })]
+                    ? [leagueCell(row.chip, { color: COLORS.cyan, size: chipSize, weight: 700 })]
                     : []),
                 ],
               }),
-              leagueCell(row.captain, { color: COLORS.white }),
-              leagueCell(row.transfersIn, { color: COLORS.silver }),
-              leagueCell(row.transfersOut, { color: COLORS.silver }),
-              leagueCell(row.freeTransfers, { color: COLORS.white, align: 'right' }),
-              leagueCell(row.transferCost, { color: row.transferCost !== '0' && row.transferCost !== '–' ? COLORS.star : COLORS.silver, align: 'right' }),
-              leagueCell(row.eventTotal, { color: COLORS.white, align: 'right' }),
-              leagueCell(row.total, { color: COLORS.star, align: 'right', weight: 700 }),
+              leagueCell(row.captain, { color: COLORS.white, size: cellSize }),
+              leagueCell(row.transfersIn, { color: COLORS.silver, size: cellSize }),
+              leagueCell(row.transfersOut, { color: COLORS.silver, size: cellSize }),
+              leagueCell(row.freeTransfers, { color: COLORS.white, align: 'right', size: cellSize }),
+              leagueCell(row.transferCost, { color: row.transferCost !== '0' && row.transferCost !== '–' ? COLORS.star : COLORS.silver, align: 'right', size: cellSize }),
+              leagueCell(row.eventTotal, { color: COLORS.white, align: 'right', size: cellSize }),
+              leagueCell(row.total, { color: COLORS.star, align: 'right', weight: 700, size: cellSize }),
             ]
           }),
         ],

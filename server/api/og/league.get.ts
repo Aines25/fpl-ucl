@@ -1,4 +1,4 @@
-import { leagueShareCard, leagueShareDimensions } from '~~/lib/engine/share-cards'
+import { leagueShareCard, leagueShareDimensions, leagueShareParts } from '~~/lib/engine/share-cards'
 import { activeCompetitionIds } from '~~/lib/engine/qualification'
 import { getClassicLeague } from '../../utils/league'
 import { leagueNode, renderSharePng } from '../../utils/og'
@@ -13,7 +13,17 @@ export default defineEventHandler(async (event) => {
     standings: table.standings,
     stillInUcl,
   })
-  const png = await renderSharePng(leagueNode(card), leagueShareDimensions(card.rows.length))
+  const rawPart = getQuery(event).part
+  let renderCard = card
+  if (rawPart != null && rawPart !== '') {
+    const part = Number(rawPart)
+    const slice = Number.isInteger(part) ? leagueShareParts(card)[part - 1] : undefined
+    if (!slice) {
+      throw createError({ statusCode: 404, statusMessage: 'League image part not found' })
+    }
+    renderCard = slice
+  }
+  const png = await renderSharePng(leagueNode(renderCard), leagueShareDimensions(renderCard.rows.length))
   setHeader(event, 'content-type', 'image/png')
   setHeader(event, 'cache-control', 'public, s-maxage=60, stale-while-revalidate=300')
   return png

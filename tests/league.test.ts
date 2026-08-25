@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { leagueShareCard } from '../lib/engine/share-cards'
+import { leagueShareCard, leagueShareDimensions, leagueShareImageParts, leagueShareParts } from '../lib/engine/share-cards'
 import type { LeagueStandingRow } from '../lib/types/league'
 import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasFromPicks, normaliseLeagueStanding, withLeagueRowDefaults } from '../server/utils/league'
 
@@ -234,5 +234,63 @@ describe('leagueShareCard', () => {
       total: '82',
       inUcl: true,
     })
+  })
+})
+
+describe('leagueShareParts', () => {
+  function standing(rank: number): LeagueStandingRow {
+    return {
+      rank,
+      lastRank: null,
+      entryId: rank,
+      playerName: `Manager ${rank}`,
+      entryName: `Team ${rank}`,
+      eventTotal: 50,
+      total: 50,
+      competitionPlayerId: null,
+      captain: null,
+      viceCaptain: null,
+      transfers: 0,
+      transferCost: 0,
+      transfersIn: [],
+      transfersOut: [],
+      freeTransfers: 1,
+      chip: null,
+      chipsUsed: [],
+      chipsRemaining: [],
+    }
+  }
+
+  it('splits a full mini-league into three labelled cards', () => {
+    const card = leagueShareCard({
+      title: 'Classic league',
+      kicker: 'Champions League · GW 1',
+      standings: Array.from({ length: 61 }, (_, index) => standing(index + 1)),
+      stillInUcl: new Set(),
+    })
+    const parts = leagueShareParts(card)
+
+    expect(parts.map((part) => part.rows.length)).toEqual([21, 21, 19])
+    expect(parts[0]?.kicker).toBe('Champions League · GW 1 · 1/3')
+    expect(parts[2]?.kicker).toBe('Champions League · GW 1 · 3/3')
+    expect(parts[0]?.rows[0]?.rank).toBe(1)
+    expect(parts[2]?.rows.at(-1)?.rank).toBe(61)
+    expect(leagueShareDimensions(parts[0]!.rows.length).height).toBeLessThan(1200)
+  })
+
+  it('drops empty trailing parts for a short table', () => {
+    const card = leagueShareCard({
+      title: 'Classic league',
+      kicker: 'Champions League · GW 1',
+      standings: [standing(1)],
+      stillInUcl: new Set(),
+    })
+
+    expect(leagueShareParts(card)).toHaveLength(1)
+    expect(leagueShareImageParts()).toEqual([
+      { href: '/api/og/league?part=1', filename: 'league-1.png' },
+      { href: '/api/og/league?part=2', filename: 'league-2.png' },
+      { href: '/api/og/league?part=3', filename: 'league-3.png' },
+    ])
   })
 })

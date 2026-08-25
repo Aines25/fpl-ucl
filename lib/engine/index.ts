@@ -25,7 +25,18 @@ export {
   templateSlots,
   templateXi,
 } from './insights'
-export { groupsShareCard, leagueShareCard, leagueShareDimensions, matchShareCard, matchdayShareCard, shareDimensions } from './share-cards'
+export {
+  groupsShareCard,
+  leagueShareCard,
+  leagueShareComfortable,
+  leagueShareDimensions,
+  leagueShareImageParts,
+  leagueShareParts,
+  LEAGUE_SHARE_PARTS,
+  matchShareCard,
+  matchdayShareCard,
+  shareDimensions,
+} from './share-cards'
 export { drawOpen, drawRoundOf16 } from './draw'
 export {
   chipHalf,
