@@ -10,7 +10,7 @@ const labels: Record<FixtureStatus, string> = {
   scheduled: 'Scheduled',
   live: 'Live',
   provisional: 'Provisional',
-  final: 'Final',
+  final: 'Confirmed',
 }
 
 const classes: Record<FixtureStatus, string> = {

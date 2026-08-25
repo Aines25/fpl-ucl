@@ -31,8 +31,8 @@ import { matchdays } from '../../data/matchdays'
         <strong class="text-live">Live</strong> while the Gameweek is in progress.
         <strong class="text-provisional">Provisional</strong> after FPL marks the Gameweek finished
         but before data is fully checked (bonus, autosubs, corrections).
-        <strong class="text-final">Final</strong> only when FPL reports the Gameweek as data-checked.
-        Live scores can still change the table; they are not official until Final.
+        <strong class="text-final">Confirmed</strong> only when FPL reports the Gameweek as data-checked.
+        Live scores can still change the table; they are not official until Confirmed.
       </p>
     </section>
 
