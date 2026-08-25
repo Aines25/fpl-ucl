@@ -10,7 +10,13 @@ export interface LeagueStandingRow {
   captain: string | null
   viceCaptain: string | null
   transfers: number | null
+  transferCost: number | null
+  transfersIn: string[]
+  transfersOut: string[]
+  freeTransfers: number | null
   chip: string | null
+  chipsUsed: import('./squad').ChipPlay[]
+  chipsRemaining: import('./squad').ChipBalance[]
 }
 
 export interface ClassicLeagueTable {
@@ -34,6 +40,11 @@ export interface LeagueEntryPicks {
   transferCost: number
   chip: string | null
   picks: LeaguePick[]
+  transfersIn: string[]
+  transfersOut: string[]
+  freeTransfers: number | null
+  chipsUsed: import('./squad').ChipPlay[]
+  chipsRemaining: import('./squad').ChipBalance[]
 }
 
 export interface LiveOwner {

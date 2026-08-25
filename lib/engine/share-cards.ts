@@ -1,10 +1,21 @@
 import type { FixtureResult, GroupId, StandingRow, TournamentFixture } from '../types/competition'
+import type { LeagueStandingRow } from '../types/league'
+import { chipLabel } from './squad'
 
 export type ShareSize = 'og' | 'square'
 
 export function shareDimensions(size: ShareSize) {
   if (size === 'square') return { width: 1080, height: 1080 }
   return { width: 1200, height: 630 }
+}
+
+export function leagueShareDimensions(rowCount: number) {
+  const width = 1080
+  const header = 118
+  const rowHeight = 30
+  const padding = 56
+  const height = header + padding + (rowCount + 1) * rowHeight
+  return { width, height: Math.max(720, Math.min(4096, height)) }
 }
 
 export interface ShareMatchCard {
@@ -103,6 +114,55 @@ export function groupsShareCard(input: {
         played: row.played,
         points: row.points,
       })),
+    })),
+  }
+}
+
+export interface ShareLeagueRow {
+  rank: number
+  name: string
+  captain: string
+  transfersIn: string
+  transfersOut: string
+  freeTransfers: string
+  transferCost: string
+  eventTotal: string
+  total: string
+  chip: string | null
+  inUcl: boolean
+}
+
+export interface ShareLeagueCard {
+  title: string
+  kicker: string
+  rows: ShareLeagueRow[]
+}
+
+function joinNames(names: string[]) {
+  return names.length ? names.join(', ') : '–'
+}
+
+export function leagueShareCard(input: {
+  title: string
+  kicker: string
+  standings: LeagueStandingRow[]
+  stillInUcl: Set<number>
+}): ShareLeagueCard {
+  return {
+    title: input.title.replace(/\p{Extended_Pictographic}/gu, '').replace(/\s+/g, ' ').trim(),
+    kicker: input.kicker,
+    rows: input.standings.map((row) => ({
+      rank: row.rank,
+      name: row.playerName,
+      captain: row.captain ?? '–',
+      transfersIn: joinNames(row.transfersIn),
+      transfersOut: joinNames(row.transfersOut),
+      freeTransfers: row.freeTransfers == null ? '–' : String(row.freeTransfers),
+      transferCost: row.transferCost == null ? '–' : String(row.transferCost),
+      eventTotal: String(row.eventTotal),
+      total: String(row.total),
+      chip: row.chip ? (chipLabel(row.chip) ?? row.chip) : null,
+      inUcl: Boolean(row.competitionPlayerId && input.stillInUcl.has(row.competitionPlayerId)),
     })),
   }
 }

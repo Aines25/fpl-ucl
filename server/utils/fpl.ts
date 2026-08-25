@@ -108,6 +108,11 @@ export interface FplHistoryResponse {
     event?: number
     time?: string
   }>
+  current?: Array<{
+    event?: number
+    event_transfers?: number
+    event_transfers_cost?: number
+  }>
 }
 
 export interface FplTransferResponse {

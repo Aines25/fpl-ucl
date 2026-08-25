@@ -25,7 +25,7 @@ export {
   templateSlots,
   templateXi,
 } from './insights'
-export { groupsShareCard, matchShareCard, matchdayShareCard, shareDimensions } from './share-cards'
+export { groupsShareCard, leagueShareCard, leagueShareDimensions, matchShareCard, matchdayShareCard, shareDimensions } from './share-cards'
 export { drawOpen, drawRoundOf16 } from './draw'
 export {
   chipHalf,
@@ -39,8 +39,10 @@ export {
   formationFromTypes,
   formatTeamValue,
   formatTransfers,
+  freeTransfersRemaining,
   groupStartersByLine,
   hydrateSquad,
+  MAX_FREE_TRANSFERS,
   SEASON_CHIPS,
   squadMovesFromTransfers,
   summariseChips,

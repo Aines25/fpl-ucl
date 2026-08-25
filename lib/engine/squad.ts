@@ -77,6 +77,45 @@ export function summariseChips(
   return { chipsUsed, chipsRemaining }
 }
 
+export const MAX_FREE_TRANSFERS = 5
+
+export interface TransferWeek {
+  event?: number
+  event_transfers?: number
+}
+
+export function freeTransfersRemaining(
+  weeks: TransferWeek[] | null | undefined,
+  chips: ChipRecord[] | null | undefined,
+  gameweek: number,
+  thisWeek?: { transfers?: number, chip?: string | null },
+): number {
+  const chipByEvent = new Map<number, string>()
+  for (const play of chips ?? []) {
+    if (play.name && play.event) chipByEvent.set(play.event, play.name)
+  }
+  if (thisWeek?.chip) chipByEvent.set(gameweek, thisWeek.chip)
+
+  const transfersByEvent = new Map<number, number>()
+  for (const week of weeks ?? []) {
+    if (!week.event) continue
+    transfersByEvent.set(week.event, week.event_transfers ?? 0)
+  }
+  if (thisWeek?.transfers != null) transfersByEvent.set(gameweek, thisWeek.transfers)
+
+  let stored = 0
+  for (let event = 1; event <= gameweek; event += 1) {
+    const available = Math.min(MAX_FREE_TRANSFERS, stored + 1)
+    const chip = chipByEvent.get(event)
+    if (chip === 'wildcard' || chip === 'freehit') {
+      stored = available
+      continue
+    }
+    stored = Math.max(0, available - (transfersByEvent.get(event) ?? 0))
+  }
+  return stored
+}
+
 export function playerPhotoUrl(code: number) {
   if (!code) return ''
   return `https://resources.premierleague.com/premierleague/photos/players/110x140/p${code}.png`

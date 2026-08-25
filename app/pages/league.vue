@@ -5,9 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 const { league, status } = useLeague()
 const { snapshot, isLive } = useCompetition()
 
-const tab = ref<'official' | 'live' | 'ownership' | 'prices'>('official')
+const tab = ref<'official' | 'live' | 'ownership' | 'prices' | 'chips'>('official')
 const { live, feed, status: liveStatus } = useLiveLeague(computed(() => tab.value === 'live' || isLive.value))
 const insightsOn = computed(() => tab.value === 'ownership' || tab.value === 'prices')
+const requestUrl = useRequestURL()
 
 type ExpandedSource = 'official' | 'live'
 type LiveMobileView = 'points' | 'picks' | 'feed'
@@ -62,6 +63,9 @@ useHead({
 useSeoMeta({
   ogTitle: () => league.value?.name ?? 'Classic league',
   ogDescription: 'Overall FPL mini-league standings, including managers outside the Champions League groups.',
+  ogImage: () => `${requestUrl.origin}/api/og/league`,
+  twitterCard: 'summary_large_image',
+  twitterImage: () => `${requestUrl.origin}/api/og/league`,
 })
 
 function toggleRow(entryId: number, source: ExpandedSource) {
@@ -89,12 +93,20 @@ watch(tab, () => {
       The overall mini-league. Official is FPL’s confirmed table. Live recalculates ranks from live player points while matches are on, and the feed lists every FPL event as it lands.
     </p>
 
+    <div class="mb-6 flex flex-wrap justify-end gap-2">
+      <ShareImageButton
+        href="/api/og/league"
+        filename="league.png"
+        label="League image"
+      />
+    </div>
+
     <p v-if="status === 'pending' && !league" class="font-stats text-silver uppercase tracking-kicker">
       Loading league…
     </p>
 
     <Tabs v-else v-model="tab" class="gap-4">
-      <TabsList class="h-auto w-full grid grid-cols-2 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 sm:grid-cols-4 sm:w-fit">
+      <TabsList class="h-auto w-full grid grid-cols-3 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 sm:grid-cols-5 sm:w-fit">
         <TabsTrigger
           value="official"
           class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
@@ -118,6 +130,12 @@ watch(tab, () => {
           class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
         >
           Prices
+        </TabsTrigger>
+        <TabsTrigger
+          value="chips"
+          class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          Chips
         </TabsTrigger>
       </TabsList>
 
@@ -288,6 +306,17 @@ watch(tab, () => {
             empty="No owned fallers this GW"
           />
         </div>
+      </TabsContent>
+
+      <TabsContent value="chips">
+        <p class="mb-4 text-sm text-silver">
+          Every mini-league manager. Gold rows are still in the Champions League.
+        </p>
+        <ChipBoard
+          :standings="league?.standings ?? []"
+          :still-in-ucl="stillInUcl"
+          :gameweek="gameweek"
+        />
       </TabsContent>
     </Tabs>
   </div>

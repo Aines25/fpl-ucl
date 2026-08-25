@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { captainsAreLocked, captainsFromPicks, extrasFromPicks, normaliseLeagueStanding } from '../server/utils/league'
+import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasFromPicks, normaliseLeagueStanding } from '../server/utils/league'
 
 describe('normaliseLeagueStanding', () => {
   it('maps FPL standings and flags tournament managers', () => {
@@ -25,7 +25,13 @@ describe('normaliseLeagueStanding', () => {
       captain: null,
       viceCaptain: null,
       transfers: null,
+      transferCost: null,
+      transfersIn: [],
+      transfersOut: [],
+      freeTransfers: null,
       chip: null,
+      chipsUsed: [],
+      chipsRemaining: [],
     })
   })
 })
@@ -48,6 +54,11 @@ describe('extrasFromPicks', () => {
         { element: 1, position: 1, multiplier: 2, isCaptain: true, isViceCaptain: false },
         { element: 2, position: 2, multiplier: 1, isCaptain: false, isViceCaptain: true },
       ],
+      transfersIn: [],
+      transfersOut: [],
+      freeTransfers: null,
+      chipsUsed: [],
+      chipsRemaining: [],
     })
   })
 
@@ -63,6 +74,11 @@ describe('extrasFromPicks', () => {
       transferCost: 0,
       chip: '3xc',
       picks: [],
+      transfersIn: [],
+      transfersOut: [],
+      freeTransfers: null,
+      chipsUsed: [],
+      chipsRemaining: [],
     })
   })
 })
@@ -119,5 +135,37 @@ describe('captainsAreLocked', () => {
       dataChecked: false,
       deadlineTime: '2099-01-01T11:00:00Z',
     }, Date.parse('2099-01-01T11:00:00Z'))).toBe(true)
+  })
+})
+
+describe('decorateLeagueExtras', () => {
+  it('attaches this gameweek moves, free transfers and remaining chips', () => {
+    const extras = extrasFromPicks({
+      entry_history: { event_transfers: 1, event_transfers_cost: 0 },
+      picks: [],
+    }, new Map())
+    const catalogue = new Map([
+      [1, { id: 1, webName: 'Haaland', teamId: 1, teamCode: 1, elementType: 4 as const, code: 1 }],
+      [2, { id: 2, webName: 'Watkins', teamId: 2, teamCode: 2, elementType: 4 as const, code: 2 }],
+    ])
+
+    expect(decorateLeagueExtras(extras, 2, [
+      { element_in: 1, element_out: 2, event: 2 },
+    ], {
+      chips: [{ name: 'bboost', event: 1 }],
+      current: [
+        { event: 1, event_transfers: 0 },
+        { event: 2, event_transfers: 1 },
+      ],
+    }, catalogue)).toMatchObject({
+      transfersIn: ['Haaland'],
+      transfersOut: ['Watkins'],
+      freeTransfers: 1,
+      chipsRemaining: [
+        { name: 'wildcard' },
+        { name: 'freehit' },
+        { name: '3xc' },
+      ],
+    })
   })
 })

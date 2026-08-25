@@ -1,6 +1,6 @@
 import { Renderer } from '@takumi-rs/core'
 import { container, googleFonts, text, type Node } from '@takumi-rs/helpers'
-import type { ShareGroupsCard, ShareMatchCard, ShareMatchdayCard, ShareSize } from '../../lib/engine/share-cards'
+import type { ShareGroupsCard, ShareLeagueCard, ShareMatchCard, ShareMatchdayCard, ShareSize } from '../../lib/engine/share-cards'
 import { shareDimensions } from '../../lib/engine/share-cards'
 
 const COLORS = {
@@ -328,9 +328,88 @@ export function groupsNode(card: ShareGroupsCard, size: ShareSize): Node {
   })
 }
 
-export async function renderSharePng(node: Node, size: ShareSize) {
+function leagueCell(label: string, opts: { color?: string, align?: 'left' | 'right' | 'center', size?: number, weight?: 600 | 700 }) {
+  return text(label, {
+    color: opts.color ?? COLORS.white,
+    fontFamily: 'Barlow Condensed',
+    fontSize: opts.size ?? 15,
+    fontWeight: opts.weight ?? 600,
+    textAlign: opts.align ?? 'left',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+  })
+}
+
+export function leagueNode(card: ShareLeagueCard): Node {
+  const header = [
+    leagueCell('#', { color: COLORS.silver, size: 12, weight: 700 }),
+    leagueCell('Manager', { color: COLORS.silver, size: 12, weight: 700 }),
+    leagueCell('C', { color: COLORS.silver, size: 12, weight: 700 }),
+    leagueCell('In', { color: COLORS.silver, size: 12, weight: 700 }),
+    leagueCell('Out', { color: COLORS.silver, size: 12, weight: 700 }),
+    leagueCell('FT', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
+    leagueCell('Hit', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
+    leagueCell('GW', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
+    leagueCell('Tot', { color: COLORS.silver, size: 12, weight: 700, align: 'right' }),
+  ]
+  const gridColumns = '36px minmax(0, 1.2fr) 88px minmax(0, 1fr) minmax(0, 1fr) 36px 40px 44px 48px'
+  return container({
+    style: {
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: COLORS.navy,
+      padding: 28,
+      gap: 16,
+    },
+    children: [
+      container({
+        style: { display: 'flex', flexDirection: 'column', gap: 4 },
+        children: [kicker(card.kicker), title(card.title, 28)],
+      }),
+      container({
+        style: {
+          display: 'grid',
+          gridTemplateColumns: gridColumns,
+          columnGap: 8,
+          rowGap: 6,
+          alignItems: 'center',
+          width: '100%',
+        },
+        children: [
+          ...header,
+          ...card.rows.flatMap((row) => {
+            const color = row.inUcl ? COLORS.star : COLORS.white
+            return [
+              leagueCell(String(row.rank), { color: COLORS.silver, align: 'left' }),
+              container({
+                style: { display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' },
+                children: [
+                  leagueCell(row.name, { color, size: 16 }),
+                  ...(row.chip
+                    ? [leagueCell(row.chip, { color: COLORS.cyan, size: 11, weight: 700 })]
+                    : []),
+                ],
+              }),
+              leagueCell(row.captain, { color: COLORS.white }),
+              leagueCell(row.transfersIn, { color: COLORS.silver }),
+              leagueCell(row.transfersOut, { color: COLORS.silver }),
+              leagueCell(row.freeTransfers, { color: COLORS.white, align: 'right' }),
+              leagueCell(row.transferCost, { color: row.transferCost !== '0' && row.transferCost !== '–' ? COLORS.star : COLORS.silver, align: 'right' }),
+              leagueCell(row.eventTotal, { color: COLORS.white, align: 'right' }),
+              leagueCell(row.total, { color: COLORS.star, align: 'right', weight: 700 }),
+            ]
+          }),
+        ],
+      }),
+    ],
+  })
+}
+
+export async function renderSharePng(node: Node, size: ShareSize | { width: number, height: number }) {
   const renderer = await getRenderer()
-  const { width, height } = shareDimensions(size)
+  const { width, height } = typeof size === 'string' ? shareDimensions(size) : size
   return renderer.render(node, { width, height, format: 'png' })
 }
 

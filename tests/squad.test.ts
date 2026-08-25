@@ -10,6 +10,7 @@ import {
   hydrateSquad,
   squadMovesFromTransfers,
   summariseChips,
+  freeTransfersRemaining,
 } from '../lib/engine/squad'
 import type { CataloguePlayer, LivePlayerStats } from '../lib/types/squad'
 
@@ -309,5 +310,36 @@ describe('squad helpers', () => {
         outCost: 0,
       },
     ])
+  })
+})
+
+describe('freeTransfersRemaining', () => {
+  it('starts the season with one free transfer', () => {
+    expect(freeTransfersRemaining([], [], 1, { transfers: 0 })).toBe(1)
+  })
+
+  it('banks unused transfers up to five', () => {
+    expect(freeTransfersRemaining([
+      { event: 1, event_transfers: 0 },
+      { event: 2, event_transfers: 0 },
+      { event: 3, event_transfers: 0 },
+    ], [], 3)).toBe(3)
+  })
+
+  it('does not consume free transfers on a wildcard', () => {
+    expect(freeTransfersRemaining([
+      { event: 1, event_transfers: 0 },
+      { event: 2, event_transfers: 8 },
+    ], [{ name: 'wildcard', event: 2 }], 2)).toBe(2)
+  })
+
+  it('resets the bank after taking hits', () => {
+    expect(freeTransfersRemaining([
+      { event: 1, event_transfers: 3 },
+    ], [], 1, { transfers: 3 })).toBe(0)
+    expect(freeTransfersRemaining([
+      { event: 1, event_transfers: 3 },
+      { event: 2, event_transfers: 0 },
+    ], [], 2)).toBe(1)
   })
 })
