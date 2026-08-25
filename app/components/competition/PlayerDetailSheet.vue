@@ -5,6 +5,13 @@ import { playerById, playersInGroup } from '../../../data/players'
 import { formatFixtureKickoff } from '../../../lib/engine/club-fixtures'
 import { competitionMultiplier } from '../../../lib/engine/differentials'
 import {
+  chanceLabel,
+  formatOwnershipPercent,
+  formatPrice,
+  formatPriceChange,
+  ownershipBand,
+} from '../../../lib/engine/insights'
+import {
   breakdownLineLabel,
   signedPointsLabel,
   splitOwners,
@@ -126,6 +133,13 @@ const ownerListProps = computed(() => ({
   currentEntryId: props.currentEntryId,
   nextOpponentId: props.nextOpponentId,
 }))
+
+const ownershipShare = computed(() => {
+  if (!props.ownership?.managerCount) return null
+  return owners.value.length / props.ownership.managerCount
+})
+const band = computed(() => ownershipShare.value == null ? null : ownershipBand(ownershipShare.value))
+const playingChance = computed(() => chanceLabel(props.player?.chanceOfPlayingThis, props.player?.chanceOfPlayingNext))
 </script>
 
 <template>
@@ -239,9 +253,33 @@ const ownerListProps = computed(() => ({
             </ul>
           </section>
 
+          <section class="space-y-2">
+            <p class="font-stats text-kicker tracking-kicker text-silver uppercase">
+              Price · news
+            </p>
+            <p class="font-stats text-label text-white">
+              {{ formatPrice(player.nowCost) }}
+              <span
+                v-if="player.costChangeEvent"
+                :class="player.costChangeEvent > 0 ? 'text-final' : 'text-live'"
+              >
+                · {{ formatPriceChange(player.costChangeEvent) }} this GW
+              </span>
+            </p>
+            <p v-if="playingChance" class="text-sm text-provisional">
+              {{ playingChance }}
+            </p>
+            <p v-if="player.news" class="text-sm text-silver">
+              {{ player.news }}
+            </p>
+          </section>
+
           <section>
             <p class="mb-1 font-stats text-kicker tracking-kicker text-silver uppercase">
               Owned by {{ owners.length }}{{ ownership?.managerCount ? ` of ${ownership.managerCount}` : '' }}
+              <template v-if="band && ownershipShare != null">
+                · {{ band }} {{ formatOwnershipPercent(ownershipShare) }}
+              </template>
             </p>
             <p v-if="otherCount" class="mb-3 text-sm text-silver">
               {{ otherCount }} {{ otherCount === 1 ? 'other manager' : 'other managers' }}

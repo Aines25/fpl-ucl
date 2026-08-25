@@ -54,6 +54,12 @@ export default defineNuxtConfig({
           'cdn-cache-control': 'public, s-maxage=30, stale-while-revalidate=30',
         },
       },
+      '/api/og/**': {
+        cors: false,
+        headers: {
+          'cache-control': 'public, s-maxage=60, stale-while-revalidate=300',
+        },
+      },
       '/api/competition/**': {
         cors: false,
         headers: {

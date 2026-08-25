@@ -28,6 +28,7 @@ const shareUrl = computed(() => {
   if (!import.meta.client) return ''
   return `${window.location.origin}/match/${props.fixture.id}`
 })
+const imageHref = computed(() => `/api/og/match/${props.fixture.id}?size=square`)
 
 const shareText = computed(() => {
   const stage = props.fixture.group ? `Group ${props.fixture.group}` : props.fixture.stage.replaceAll('-', ' ')
@@ -94,6 +95,10 @@ async function share() {
         <Copy v-else class="size-3.5" />
         {{ copied ? 'Copied' : 'Copy' }}
       </button>
+      <ShareImageButton
+        :href="imageHref"
+        :filename="`${home.name}-vs-${away.name}.png`"
+      />
       <button
         type="button"
         class="inline-flex items-center gap-1.5 px-2 py-1.5 font-stats text-kicker tracking-kicker text-cyan uppercase hover:text-white"

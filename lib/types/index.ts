@@ -21,6 +21,7 @@ export type {
 export type {
   ClassicLeagueTable,
   LeagueEntryPicks,
+  LeagueInsights,
   LeagueOwnership,
   LeaguePick,
   LeagueStandingRow,
@@ -28,6 +29,9 @@ export type {
   LiveFeedEvent,
   LiveLeagueTable,
   LiveOwner,
+  OwnedPlayerRow,
+  OwnershipBand,
+  PriceMoverRow,
 } from './league'
 
 export type {

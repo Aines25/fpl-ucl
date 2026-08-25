@@ -68,6 +68,7 @@ import { matchdays } from '../../data/matchdays'
         <li>Most goals scored by the manager’s FPL team across the tie (when available)</li>
         <li>Fewest goals conceded across the tie (when available)</li>
         <li>Highest single-leg FPL score</li>
+        <li>A deterministic coin toss if still level (never random)</li>
       </ol>
     </section>
 

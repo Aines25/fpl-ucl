@@ -1,13 +1,52 @@
 import { committedFrozenGameweeks } from '~~/data/frozen-scores'
 import { competition, fixtures, groupIds, groups, knockoutTies, matchdays, players } from '~~/data'
+import { getPlayer } from '~~/data/players'
+import { goalsFromCountingPicks, resolveKnockoutTie, type KnockoutGoals } from '~~/lib/engine/knockout'
 import { determineFixtureResult } from '~~/lib/engine/results'
 import { standingsForGroup } from '~~/lib/engine/tiebreakers'
-import { resolveKnockoutTie } from '~~/lib/engine/knockout'
 import { scenariosForGroup } from '~~/lib/engine/scenarios'
-import type { FplEventState, GroupId, GroupScenarios } from '~~/lib/types/competition'
+import type { FplEventState, GroupId, GroupScenarios, KnockoutTieConfig } from '~~/lib/types/competition'
 import { isFresh, readSharedCache, writeSharedCache, type Timed } from './cache'
-import { setApiCacheHeaders } from './fpl'
+import { fplFetch, setApiCacheHeaders, type FplPicksResponse } from './fpl'
 import { getBootstrap, getScoresForGameweeks, maxAgeForEvents } from './scores'
+import { getLiveStats } from './squad'
+
+async function knockoutGoalsForManager(managerId: number, gameweeks: number[]): Promise<KnockoutGoals | null> {
+  const player = getPlayer(managerId)
+  if (!player.fplId) return null
+  const legs = await Promise.all(gameweeks.map(async (gameweek) => {
+    const [payload, live] = await Promise.all([
+      fplFetch<FplPicksResponse>(`/entry/${player.fplId}/event/${gameweek}/picks/`).catch(() => null),
+      getLiveStats(gameweek),
+    ])
+    return goalsFromCountingPicks(payload?.picks ?? [], live)
+  }))
+  return legs.reduce(
+    (total, leg) => ({
+      playerId: managerId,
+      goalsScored: total.goalsScored + leg.goalsScored,
+      goalsConceded: total.goalsConceded + leg.goalsConceded,
+    }),
+    { playerId: managerId, goalsScored: 0, goalsConceded: 0 },
+  )
+}
+
+async function knockoutGoalsForTie(tie: KnockoutTieConfig): Promise<KnockoutGoals[] | null> {
+  if (tie.playerOneId == null || tie.playerTwoId == null) return null
+  const gameweeks = [...new Set(
+    [tie.firstLegFixtureId, tie.secondLegFixtureId]
+      .filter((id): id is string => Boolean(id))
+      .map((id) => fixtures.find((fixture) => fixture.id === id)?.fplGameweek)
+      .filter((gameweek): gameweek is number => Number.isFinite(gameweek)),
+  )]
+  if (!gameweeks.length) return null
+  const [one, two] = await Promise.all([
+    knockoutGoalsForManager(tie.playerOneId, gameweeks),
+    knockoutGoalsForManager(tie.playerTwoId, gameweeks),
+  ])
+  if (!one || !two) return null
+  return [one, two]
+}
 
 export async function buildCompetitionSnapshot() {
   let events: FplEventState[] = []
@@ -60,9 +99,21 @@ export async function buildCompetitionSnapshot() {
     ]),
   ) as Record<GroupId, ReturnType<typeof standingsForGroup>>
 
-  const knockout = knockoutTies.map((tie) =>
-    resolveKnockoutTie(tie, fixtures, results, eventMap),
-  )
+  const knockout = await Promise.all(knockoutTies.map(async (tie) => {
+    const preliminary = resolveKnockoutTie(tie, fixtures, results, eventMap)
+    if (
+      preliminary.winnerId == null
+      || !preliminary.decidedByTiebreak
+      || preliminary.playerOneAggregate == null
+      || preliminary.playerTwoAggregate == null
+      || preliminary.playerOneAggregate !== preliminary.playerTwoAggregate
+    ) {
+      return preliminary
+    }
+    const goals = await knockoutGoalsForTie(tie)
+    if (!goals) return preliminary
+    return resolveKnockoutTie(tie, fixtures, results, eventMap, goals)
+  }))
 
   const scenarios = Object.fromEntries(
     groupIds.map((group) => [

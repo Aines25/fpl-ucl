@@ -2,7 +2,30 @@ export { generateGroupStageFixtures } from './schedule'
 export { determineFixtureResult, eventStatus, shouldUseLiveGameweekPoints } from './results'
 export { standingsForGroup } from './tiebreakers'
 export { activeCompetitionIds, qualifiedFromGroup, qualifiedSides } from './qualification'
-export { decideKnockoutWinner, resolveKnockoutTie } from './knockout'
+export {
+  accumulateKnockoutGoals,
+  decideKnockoutWinner,
+  goalsFromCountingPicks,
+  resolveKnockoutTie,
+} from './knockout'
+export {
+  TEMPLATE_MIN,
+  POPULAR_MIN,
+  buildLeagueInsights,
+  chanceLabel,
+  formatOwnershipPercent,
+  formatPrice,
+  formatPriceChange,
+  mostCaptainedRows,
+  ownedRowsFromOwners,
+  ownershipBand,
+  playerHasAlert,
+  priceMovers,
+  templateFormation,
+  templateSlots,
+  templateXi,
+} from './insights'
+export { groupsShareCard, matchShareCard, matchdayShareCard, shareDimensions } from './share-cards'
 export { drawOpen, drawRoundOf16 } from './draw'
 export {
   chipHalf,

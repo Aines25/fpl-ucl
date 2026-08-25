@@ -7,6 +7,13 @@ export interface CataloguePlayer {
   teamCode: number
   elementType: ElementType
   code: number
+  nowCost?: number
+  costChangeEvent?: number
+  news?: string
+  newsAdded?: string | null
+  chanceOfPlayingThis?: number | null
+  chanceOfPlayingNext?: number | null
+  status?: string
 }
 
 export interface LivePlayerStats {
@@ -63,6 +70,13 @@ export interface SquadSlot {
   shirtUrl: string
   fixture: ClubFixture | null
   breakdown: PlayerBreakdownLine[]
+  nowCost?: number
+  costChangeEvent?: number
+  news?: string
+  newsAdded?: string | null
+  chanceOfPlayingThis?: number | null
+  chanceOfPlayingNext?: number | null
+  status?: string
 }
 
 export interface SquadMove {

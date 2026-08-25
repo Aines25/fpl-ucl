@@ -13,6 +13,40 @@ export interface KnockoutGoals {
   goalsConceded: number
 }
 
+export interface CountingPick {
+  element: number
+  multiplier: number
+}
+
+export function goalsFromCountingPicks(
+  picks: CountingPick[],
+  live: Map<number, { goalsScored?: number, goalsConceded?: number }>,
+) {
+  let goalsScored = 0
+  let goalsConceded = 0
+  for (const pick of picks) {
+    if (pick.multiplier <= 0) continue
+    const stats = live.get(pick.element)
+    goalsScored += stats?.goalsScored ?? 0
+    goalsConceded += stats?.goalsConceded ?? 0
+  }
+  return { goalsScored, goalsConceded }
+}
+
+export function accumulateKnockoutGoals(
+  playerId: number,
+  legs: Array<{ goalsScored: number, goalsConceded: number }>,
+): KnockoutGoals {
+  return legs.reduce(
+    (total, leg) => ({
+      playerId,
+      goalsScored: total.goalsScored + leg.goalsScored,
+      goalsConceded: total.goalsConceded + leg.goalsConceded,
+    }),
+    { playerId, goalsScored: 0, goalsConceded: 0 },
+  )
+}
+
 function scoreForPlayer(fixture: TournamentFixture, result: FixtureResult, playerId: number) {
   if (result.homeScore === null || result.awayScore === null) return null
   if (fixture.homeId === playerId) return result.homeScore

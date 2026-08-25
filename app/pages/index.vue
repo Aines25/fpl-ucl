@@ -3,10 +3,13 @@ import { fixtures, groupIds } from '../../data'
 
 const { snapshot, status } = useCompetition()
 const { resultById } = useFixtures()
+const requestUrl = useRequestURL()
 
 useSeoMeta({
   ogTitle: 'Champions League · 2026/27',
   ogDescription: 'Private FPL Champions League — groups, fixtures, and the overall league table.',
+  ogImage: () => `${requestUrl.origin}/api/og/groups?md=${snapshot.value?.currentMatchday ?? 1}`,
+  twitterCard: 'summary_large_image',
 })
 
 const currentFixtures = computed(() => {

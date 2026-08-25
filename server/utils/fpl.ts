@@ -39,13 +39,20 @@ export interface FplBootstrapResponse {
     data_checked: boolean
     deadline_time: string | null
   }>
-  elements?: Array<{
-    id: number
-    web_name: string
-    team: number
-    element_type: number
-    code: number
-  }>
+    elements?: Array<{
+      id: number
+      web_name: string
+      team: number
+      element_type: number
+      code: number
+      now_cost?: number
+      cost_change_event?: number
+      news?: string
+      news_added?: string | null
+      chance_of_playing_this_round?: number | null
+      chance_of_playing_next_round?: number | null
+      status?: string
+    }>
   teams?: Array<{
     id: number
     name: string

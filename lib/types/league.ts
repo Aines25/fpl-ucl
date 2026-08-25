@@ -86,3 +86,38 @@ export interface LiveLeagueTable {
   feed: LiveFeedEvent[]
   ownersByPlayer: Record<number, LiveOwner[]>
 }
+
+export type OwnershipBand = 'template' | 'popular' | 'differential'
+
+export interface OwnedPlayerRow {
+  elementId: number
+  webName: string
+  photoUrl: string
+  shirtUrl: string
+  elementType: import('./squad').ElementType
+  owners: number
+  captains: number
+  percent: number
+  band: OwnershipBand
+}
+
+export interface PriceMoverRow {
+  elementId: number
+  webName: string
+  photoUrl: string
+  nowCost: number
+  costChangeEvent: number
+  owners: number
+}
+
+export interface LeagueInsights {
+  gameweek: number
+  managerCount: number
+  picksComplete: boolean
+  mostOwned: OwnedPlayerRow[]
+  mostCaptained: OwnedPlayerRow[]
+  templateXi: import('./squad').SquadSlot[]
+  templateFormation: string
+  risers: PriceMoverRow[]
+  fallers: PriceMoverRow[]
+}

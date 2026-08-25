@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { decideKnockoutWinner } from '../lib/engine/knockout'
+import { decideKnockoutWinner, goalsFromCountingPicks } from '../lib/engine/knockout'
 import { drawOpen, drawRoundOf16 } from '../lib/engine/draw'
 import type { KnockoutTieConfig } from '../lib/types/competition'
 
@@ -26,6 +26,21 @@ describe('decideKnockoutWinner', () => {
     })
     expect(winner.winnerId).toBe(2)
     expect(winner.decidedByTiebreak).toBe(true)
+  })
+
+  it('sums goals from counting picks without captain multipliers', () => {
+    expect(goalsFromCountingPicks(
+      [
+        { element: 1, multiplier: 2 },
+        { element: 2, multiplier: 1 },
+        { element: 3, multiplier: 0 },
+      ],
+      new Map([
+        [1, { goalsScored: 2, goalsConceded: 1 }],
+        [2, { goalsScored: 1, goalsConceded: 1 }],
+        [3, { goalsScored: 4, goalsConceded: 9 }],
+      ]),
+    )).toEqual({ goalsScored: 3, goalsConceded: 2 })
   })
 
   it('uses a deterministic coin toss rather than Math.random', () => {

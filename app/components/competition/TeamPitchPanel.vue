@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FplSquadView, SquadSlot } from '../../../lib/types/squad'
+import { playerHasAlert } from '../../../lib/engine/insights'
 
 const props = withDefaults(defineProps<{
   squad?: FplSquadView
@@ -46,6 +47,11 @@ watch(
 function selectPlayer(player: SquadSlot) {
   selected.value = player
 }
+
+const flagged = computed(() => {
+  if (!props.squad) return []
+  return [...props.squad.starters, ...props.squad.bench].filter((slot) => playerHasAlert(slot))
+})
 </script>
 
 <template>
@@ -69,6 +75,29 @@ function selectPlayer(player: SquadSlot) {
         : 'space-y-3'"
     >
       <div class="space-y-3">
+        <div
+          v-if="flagged.length"
+          class="rounded-md border border-live/30 bg-live/10 px-4 py-3"
+        >
+          <p class="mb-2 font-stats text-kicker tracking-kicker text-live uppercase">
+            Flagged this GW
+          </p>
+          <ul class="space-y-1.5">
+            <li v-for="player in flagged" :key="player.elementId">
+              <button
+                type="button"
+                class="w-full text-left font-stats text-label text-white hover:text-cyan"
+                @click="selectPlayer(player)"
+              >
+                {{ player.webName }}
+                <span v-if="player.news" class="text-silver"> · {{ player.news }}</span>
+                <span v-else-if="player.costChangeEvent" class="text-silver">
+                  · price {{ player.costChangeEvent > 0 ? 'up' : 'down' }}
+                </span>
+              </button>
+            </li>
+          </ul>
+        </div>
         <TeamStatsBar v-if="squad" :squad="squad" :scoring="scoring" />
         <TeamTransfers v-if="squad" :squad="squad" />
         <TeamChips v-if="squad" :squad="squad" />

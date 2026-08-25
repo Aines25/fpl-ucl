@@ -22,6 +22,7 @@ const { resultById } = useFixtures()
 const result = computed(() => resultById.value.get(fixture.id))
 const differentials = computed(() => compareSquads(homeSquad.value, awaySquad.value))
 
+const requestUrl = useRequestURL()
 const homeScore = computed(() => result.value?.homeScore ?? homeSquad.value?.netPoints ?? null)
 const awayScore = computed(() => result.value?.awayScore ?? awaySquad.value?.netPoints ?? null)
 const scoreLine = computed(() => {
@@ -37,8 +38,11 @@ useHead({
 useSeoMeta({
   ogTitle: `${home.name} vs ${away.name}`,
   ogDescription: scoreLine,
+  ogImage: `${requestUrl.origin}/api/og/match/${fixture.id}`,
   twitterTitle: `${home.name} vs ${away.name}`,
   twitterDescription: scoreLine,
+  twitterCard: 'summary_large_image',
+  twitterImage: `${requestUrl.origin}/api/og/match/${fixture.id}`,
 })
 </script>
 

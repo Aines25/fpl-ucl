@@ -243,6 +243,13 @@ function slotFromPick(
     shirtUrl: playerShirtUrl(player?.teamCode ?? 0, elementType === 1),
     fixture: teamId ? fixtures.get(teamId) ?? null : null,
     breakdown: gameweekBreakdownFromStats(stats ?? { minutes: 0, points: 0 }, elementType),
+    nowCost: player?.nowCost,
+    costChangeEvent: player?.costChangeEvent,
+    news: player?.news,
+    newsAdded: player?.newsAdded,
+    chanceOfPlayingThis: player?.chanceOfPlayingThis,
+    chanceOfPlayingNext: player?.chanceOfPlayingNext,
+    status: player?.status,
   }
 }
 

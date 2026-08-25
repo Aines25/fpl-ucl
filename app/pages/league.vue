@@ -5,8 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 const { league, status } = useLeague()
 const { snapshot, isLive } = useCompetition()
 
-const tab = ref<'official' | 'live'>('official')
+const tab = ref<'official' | 'live' | 'ownership' | 'prices'>('official')
 const { live, feed, status: liveStatus } = useLiveLeague(computed(() => tab.value === 'live' || isLive.value))
+const insightsOn = computed(() => tab.value === 'ownership' || tab.value === 'prices')
 
 type ExpandedSource = 'official' | 'live'
 type LiveMobileView = 'points' | 'picks' | 'feed'
@@ -16,6 +17,38 @@ const liveMobileView = ref<LiveMobileView>('points')
 const liveTableColumns = computed(() => liveMobileView.value === 'feed' ? 'points' : liveMobileView.value)
 
 const gameweek = computed(() => snapshot.value?.currentGameweek ?? 1)
+const { insights, status: insightsStatus } = useLeagueInsights(gameweek, insightsOn)
+const templateSquad = computed(() => {
+  const xi = insights.value?.templateXi ?? []
+  if (!xi.length) return undefined
+  return {
+    managerId: 0,
+    fplId: 0,
+    name: 'Template XI',
+    teamName: `${insights.value?.managerCount ?? 0} managers`,
+    gameweek: gameweek.value,
+    available: true,
+    points: 0,
+    officialPoints: 0,
+    transferCost: 0,
+    netPoints: 0,
+    officialNetPoints: 0,
+    transfers: 0,
+    moves: [],
+    overallRank: null,
+    eventRank: null,
+    totalPoints: null,
+    teamValue: null,
+    bank: null,
+    chip: null,
+    chipLabel: null,
+    chipsUsed: [],
+    chipsRemaining: [],
+    formation: insights.value?.templateFormation ?? '–',
+    starters: xi,
+    bench: [],
+  }
+})
 const { squad, loading, error } = useEntrySquad(expandedEntryId, gameweek)
 const stillInUcl = computed(() => {
   if (!snapshot.value?.standings) return new Set<number>()
@@ -61,7 +94,7 @@ watch(tab, () => {
     </p>
 
     <Tabs v-else v-model="tab" class="gap-4">
-      <TabsList class="h-auto w-full grid grid-cols-2 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 sm:w-fit">
+      <TabsList class="h-auto w-full grid grid-cols-2 gap-1 rounded-md border border-cyan/20 bg-navy-900/80 p-1 sm:grid-cols-4 sm:w-fit">
         <TabsTrigger
           value="official"
           class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
@@ -74,9 +107,24 @@ watch(tab, () => {
         >
           Live
         </TabsTrigger>
+        <TabsTrigger
+          value="ownership"
+          class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          Ownership
+        </TabsTrigger>
+        <TabsTrigger
+          value="prices"
+          class="rounded-sm border-transparent px-3 py-1.5 font-stats text-kicker tracking-kicker text-silver uppercase data-[state=active]:bg-cyan/20 data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          Prices
+        </TabsTrigger>
       </TabsList>
 
-      <p class="flex items-center gap-2 font-stats text-kicker tracking-kicker text-silver uppercase">
+      <p
+        v-if="tab === 'official' || tab === 'live'"
+        class="flex items-center gap-2 font-stats text-kicker tracking-kicker text-silver uppercase"
+      >
         <span class="inline-block size-3 rounded-sm bg-star/30 ring-1 ring-star/40" />
         Gold rows are still in the Champions League
       </p>
@@ -196,6 +244,49 @@ watch(tab, () => {
               :owners-by-player="live?.ownersByPlayer ?? {}"
             />
           </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="ownership" class="space-y-6">
+        <p v-if="insightsStatus === 'pending' && !insights" class="font-stats text-silver uppercase tracking-kicker">
+          Loading ownership…
+        </p>
+        <p v-else-if="insights && !insights.picksComplete" class="text-sm text-silver">
+          Still fetching a few squads. Ownership will settle as those picks arrive.
+        </p>
+        <p v-else class="text-sm text-silver">
+          Mini-league ownership this gameweek. Template is 50%+, popular 25–49%, differential below that. Pitch numbers are owner counts.
+        </p>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <OwnershipList title="Most owned" :rows="insights?.mostOwned ?? []" />
+          <OwnershipList title="Most captained" :rows="insights?.mostCaptained ?? []" count-key="captains" />
+        </div>
+        <div v-if="templateSquad" class="max-w-xl">
+          <p class="mb-3 font-stats text-kicker tracking-kicker text-cyan uppercase">
+            Template XI · {{ insights?.templateFormation }}
+          </p>
+          <PitchView :squad="templateSquad" size="sm" />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="prices" class="space-y-6">
+        <p v-if="insightsStatus === 'pending' && !insights" class="font-stats text-silver uppercase tracking-kicker">
+          Loading prices…
+        </p>
+        <p v-else class="text-sm text-silver">
+          Overnight FPL price changes for players owned in this mini-league.
+        </p>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <PriceMoversList
+            title="Risers"
+            :rows="insights?.risers ?? []"
+            empty="No owned risers this GW"
+          />
+          <PriceMoversList
+            title="Fallers"
+            :rows="insights?.fallers ?? []"
+            empty="No owned fallers this GW"
+          />
         </div>
       </TabsContent>
     </Tabs>

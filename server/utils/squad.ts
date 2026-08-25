@@ -58,6 +58,13 @@ function catalogueFromBootstrap(payload: FplBootstrapResponse): BootstrapCatalog
       teamCode: team?.code ?? 0,
       elementType: elementType === 2 || elementType === 3 || elementType === 4 ? elementType : 1,
       code: element.code,
+      nowCost: element.now_cost,
+      costChangeEvent: element.cost_change_event,
+      news: element.news,
+      newsAdded: element.news_added,
+      chanceOfPlayingThis: element.chance_of_playing_this_round,
+      chanceOfPlayingNext: element.chance_of_playing_next_round,
+      status: element.status,
     })
   }
   return {

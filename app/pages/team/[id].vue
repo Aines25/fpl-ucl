@@ -17,9 +17,20 @@ if (!player) {
 
 const gameweek = computed(() => {
   const fromQuery = Number(route.query.gw)
-  if (Number.isFinite(fromQuery) && fromQuery >= 1) return fromQuery
-  return snapshot.value?.currentGameweek ?? 1
+  const current = snapshot.value?.currentGameweek ?? 1
+  if (Number.isFinite(fromQuery) && fromQuery >= 1) return Math.min(fromQuery, current)
+  return current
 })
+const maxGameweek = computed(() => snapshot.value?.currentGameweek ?? 1)
+
+function setGameweek(next: number) {
+  const current = snapshot.value?.currentGameweek ?? 1
+  const clamped = Math.min(maxGameweek.value, Math.max(1, next))
+  const query = { ...route.query }
+  if (clamped === current) delete query.gw
+  else query.gw = String(clamped)
+  return navigateTo({ path: route.path, query })
+}
 
 const { squad, loading } = useSquad(player.id, gameweek)
 const qualification = computed(() => {
@@ -55,6 +66,12 @@ useHead({
     <SectionHeading
       :kicker="`Group ${player.group} · GW ${gameweek}`"
       :title="player.name"
+    />
+
+    <GameweekPicker
+      :gameweek="gameweek"
+      :max-gameweek="maxGameweek"
+      @update="setGameweek"
     />
 
     <div

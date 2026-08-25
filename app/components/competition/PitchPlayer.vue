@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SquadSlot } from '../../../lib/types/squad'
+import { playerHasAlert } from '../../../lib/engine/insights'
 
 const props = withDefaults(defineProps<{
   player: SquadSlot
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const src = ref(props.player.photoUrl || props.player.shirtUrl)
+const flagged = computed(() => playerHasAlert(props.player))
 
 watch(
   () => [props.player.photoUrl, props.player.shirtUrl],
@@ -75,6 +77,11 @@ const badge = computed(() => {
           {{ player.webName.slice(0, 2) }}
         </div>
       </div>
+      <span
+        v-if="flagged"
+        class="absolute top-0 left-0 size-2 rounded-full bg-live ring-2 ring-navy-950"
+        aria-hidden="true"
+      />
       <span
         v-if="badge"
         class="absolute -top-1 -right-1 rounded-sm bg-star px-1 font-stats text-[10px] leading-tight font-semibold text-navy-950"
