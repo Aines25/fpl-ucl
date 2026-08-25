@@ -1,4 +1,5 @@
-import { Renderer } from '@takumi-rs/core'
+import init, { Renderer } from '@takumi-rs/wasm'
+import wasmModule from '@takumi-rs/wasm/next'
 import { container, googleFonts, text, type Node } from '@takumi-rs/helpers'
 import type { ShareGroupsCard, ShareLeagueCard, ShareMatchCard, ShareMatchdayCard, ShareSize } from '../../lib/engine/share-cards'
 import { shareDimensions } from '../../lib/engine/share-cards'
@@ -25,9 +26,14 @@ const GROUP_COLORS: Record<string, string> = {
 
 let rendererPromise: Promise<Renderer> | null = null
 
+async function loadTakumiWasm() {
+  await init({ module_or_path: wasmModule })
+}
+
 async function getRenderer() {
   if (!rendererPromise) {
     rendererPromise = (async () => {
+      await loadTakumiWasm()
       const renderer = new Renderer()
       const fonts = await googleFonts([
         { name: 'Cinzel', weight: [600, 700] },

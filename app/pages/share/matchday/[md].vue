@@ -26,11 +26,13 @@ useSeoMeta({
     <p class="text-silver">
       Paste this link in WhatsApp to share the matchday graphic, or save the image.
     </p>
-    <img
-      :src="`/api/og/matchday/${md}`"
-      alt=""
-      class="w-full rounded-md border border-cyan/20"
-    >
+    <ClientOnly>
+      <img
+        :src="`/api/og/matchday/${md}`"
+        alt=""
+        class="w-full rounded-md border border-cyan/20"
+      >
+    </ClientOnly>
     <div class="flex flex-wrap gap-2">
       <ShareImageButton
         :href="`/api/og/matchday/${md}?size=square`"
