@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasFromPicks, normaliseLeagueStanding } from '../server/utils/league'
+import { leagueShareCard } from '../lib/engine/share-cards'
+import type { LeagueStandingRow } from '../lib/types/league'
+import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasFromPicks, normaliseLeagueStanding, withLeagueRowDefaults } from '../server/utils/league'
 
 describe('normaliseLeagueStanding', () => {
   it('maps FPL standings and flags tournament managers', () => {
@@ -166,6 +168,71 @@ describe('decorateLeagueExtras', () => {
         { name: 'freehit' },
         { name: '3xc' },
       ],
+    })
+  })
+})
+
+describe('withLeagueRowDefaults', () => {
+  it('fills transfer fields missing from a pre-deploy cache row', () => {
+    const row = {
+      rank: 1,
+      lastRank: null,
+      entryId: 1,
+      playerName: 'Jack Wellon',
+      entryName: 'Wellon Truly Screwed',
+      eventTotal: 82,
+      total: 82,
+      competitionPlayerId: 14,
+      captain: 'B.Fernandes',
+      viceCaptain: 'Mbeumo',
+      transfers: 0,
+      chip: 'bboost',
+    } as LeagueStandingRow
+
+    expect(withLeagueRowDefaults(row)).toMatchObject({
+      transferCost: null,
+      transfersIn: [],
+      transfersOut: [],
+      freeTransfers: null,
+      chipsUsed: [],
+      chipsRemaining: [],
+    })
+  })
+})
+
+describe('leagueShareCard', () => {
+  it('renders dashes when standings omit transfer arrays', () => {
+    const row = {
+      rank: 1,
+      lastRank: null,
+      entryId: 1,
+      playerName: 'Jack Wellon',
+      entryName: 'Wellon Truly Screwed',
+      eventTotal: 82,
+      total: 82,
+      competitionPlayerId: 14,
+      captain: 'B.Fernandes',
+      viceCaptain: 'Mbeumo',
+      transfers: 0,
+      chip: 'bboost',
+    } as LeagueStandingRow
+
+    const card = leagueShareCard({
+      title: 'Champion Sam Woodcock 25/26 ⚽️',
+      kicker: 'Champions League · GW 1',
+      standings: [row],
+      stillInUcl: new Set([14]),
+    })
+
+    expect(card.rows[0]).toMatchObject({
+      captain: 'B.Fernandes',
+      transfersIn: '–',
+      transfersOut: '–',
+      freeTransfers: '–',
+      transferCost: '–',
+      eventTotal: '82',
+      total: '82',
+      inUcl: true,
     })
   })
 })

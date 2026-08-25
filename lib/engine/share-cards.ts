@@ -138,8 +138,8 @@ export interface ShareLeagueCard {
   rows: ShareLeagueRow[]
 }
 
-function joinNames(names: string[]) {
-  return names.length ? names.join(', ') : '–'
+function joinNames(names: string[] | null | undefined) {
+  return names?.length ? names.join(', ') : '–'
 }
 
 export function leagueShareCard(input: {

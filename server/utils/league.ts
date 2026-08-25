@@ -106,6 +106,25 @@ function leagueCaptainsComplete(standings: LeagueStandingRow[]) {
   return standings.every((row) => row.entryId <= 0 || (typeof row.transfers === 'number' && 'chip' in row))
 }
 
+export function withLeagueRowDefaults(row: LeagueStandingRow): LeagueStandingRow {
+  return {
+    ...row,
+    transferCost: row.transferCost ?? null,
+    transfersIn: row.transfersIn ?? [],
+    transfersOut: row.transfersOut ?? [],
+    freeTransfers: row.freeTransfers ?? null,
+    chipsUsed: row.chipsUsed ?? [],
+    chipsRemaining: row.chipsRemaining ?? [],
+  }
+}
+
+function withLeagueTableDefaults(table: ClassicLeagueTable): ClassicLeagueTable {
+  return {
+    ...table,
+    standings: table.standings.map(withLeagueRowDefaults),
+  }
+}
+
 export function normaliseLeagueStanding(
   row: NonNullable<NonNullable<FplClassicLeagueResponse['standings']>['results']>[number],
   competitionIds: Map<number, number>,
@@ -292,14 +311,14 @@ async function fetchClassicLeague(leagueId: number): Promise<ClassicLeagueTable>
 
 export async function getClassicLeague(leagueId = competition.fplLeagueId) {
   if (isFresh(leagueMemory, LEAGUE_TTL_MS) && leagueMemory) {
-    return leagueMemory.data
+    return withLeagueTableDefaults(leagueMemory.data)
   }
 
   if (!leagueMemory) {
     const shared = await readSharedCache<ClassicLeagueTable>(`fpl:league:v2:${leagueId}`)
     if (shared) {
       leagueMemory = shared
-      if (isFresh(shared, LEAGUE_TTL_MS)) return shared.data
+      if (isFresh(shared, LEAGUE_TTL_MS)) return withLeagueTableDefaults(shared.data)
     }
   }
 
@@ -329,6 +348,6 @@ export async function getClassicLeague(leagueId = competition.fplLeagueId) {
       })
   }
 
-  if (leagueMemory) return leagueMemory.data
-  return leagueInflight
+  if (leagueMemory) return withLeagueTableDefaults(leagueMemory.data)
+  return leagueInflight.then(withLeagueTableDefaults)
 }

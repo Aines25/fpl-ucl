@@ -27,9 +27,9 @@ function isStillInUcl(playerId: number | null) {
 }
 
 function chipCell(row: LeagueStandingRow, name: string) {
-  const used = row.chipsUsed.find((chip) => chip.name === name && chipHalf(chip.event) === half.value)
+  const used = (row.chipsUsed ?? []).find((chip) => chip.name === name && chipHalf(chip.event) === half.value)
   if (used) return { kind: 'used' as const, label: `GW ${used.event}` }
-  if (row.chipsRemaining.some((chip) => chip.name === name)) return { kind: 'left' as const, label: 'Left' }
+  if ((row.chipsRemaining ?? []).some((chip) => chip.name === name)) return { kind: 'left' as const, label: 'Left' }
   return { kind: 'unknown' as const, label: '–' }
 }
 
