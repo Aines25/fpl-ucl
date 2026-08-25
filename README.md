@@ -42,16 +42,30 @@ Paste the printed fixtures/ties into [`data/knockout.ts`](data/knockout.ts) and 
 
 ## Deploy
 
-The app is a standard Nuxt 4 / Nitro server. It needs SSR (FPL calls are server-side). Pick the host that currently serves the domain and set the matching preset if it is not auto-detected:
+The live site is a Cloudflare Worker: https://fpl-ucl.christian-8ee.workers.dev
 
-| Host | Command / notes |
-| --- | --- |
-| Vercel | `npm run build` — Nuxt detects Vercel |
-| Netlify | `npm run build` — see `netlify.toml` |
-| Cloudflare Pages | `NITRO_PRESET=cloudflare_pages npm run build` |
-| VPS / Node | `NITRO_PRESET=node-server npm run build` then `node .output/server/index.mjs` |
+Pushing to GitHub does not update it. Deploy from this repo:
 
-Point `website` (and the apex if you use it) at that deployment.
+```bash
+npm run deploy
+```
+
+That builds with the Cloudflare Workers preset and runs Wrangler.
+
+Login uses the **system default browser** (often Chrome). To finish it in Safari:
+
+```bash
+npx wrangler login --browser=false
+```
+
+Leave that running, copy the printed URL into Safari (where you are logged into Cloudflare), and wait for it to redirect to `localhost:8976`. The terminal must stay open.
+
+To skip the browser entirely, create an API token (Workers Scripts Edit) at https://dash.cloudflare.com/profile/api-tokens and deploy with:
+
+```bash
+export CLOUDFLARE_API_TOKEN=your-token
+npm run deploy
+```
 
 Live snapshots are cached for 60 seconds while a gameweek is in play (12 hours once FPL has checked the data). On Cloudflare Workers the cache is shared via the Cache API, so a WhatsApp group opening the site at once does not each trigger a full FPL burst. No KV namespace is required.
 

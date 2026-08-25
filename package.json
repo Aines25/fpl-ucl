@@ -11,7 +11,8 @@
     "test": "vitest run",
     "generate:fixtures": "tsx scripts/generate-group-fixtures.ts",
     "draw:knockout": "tsx scripts/draw-knockout.ts",
-    "freeze:scores": "tsx scripts/freeze-scores.ts"
+    "freeze:scores": "tsx scripts/freeze-scores.ts",
+    "deploy": "nuxt build --preset cloudflare-module && npx wrangler deploy"
   },
   "dependencies": {
     "@lucide/vue": "^1.33.0",

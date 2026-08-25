@@ -4,7 +4,7 @@ import type { FplEventState, FplGameweekScore } from '../../lib/types/competitio
 export const FPL_BASE = 'https://fantasy.premierleague.com/api'
 
 const headers = {
-  'User-Agent': 'Mozilla/5.0 (compatible; FPL-UCL/1.0; +https://christiancodes.co.uk)',
+  'User-Agent': 'Mozilla/5.0 (compatible; FPL-UCL/1.0; +https://fpl-ucl.christian-8ee.workers.dev)',
   Accept: 'application/json',
 }
 

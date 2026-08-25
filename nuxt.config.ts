@@ -54,6 +54,10 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
+    cloudflare: {
+      nodeCompat: true,
+      deployConfig: true,
+    },
     routeRules: {
       '/api/fpl/**': {
         cors: false,

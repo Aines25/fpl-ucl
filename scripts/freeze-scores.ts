@@ -8,7 +8,7 @@ import frozenScores from '../data/frozen-scores.json'
 import { FPL_BASE, normaliseGameweekScore, type FplBootstrapResponse, type FplLiveResponse, type FplPicksResponse } from '../server/utils/fpl'
 
 const headers = {
-  'User-Agent': 'Mozilla/5.0 (compatible; FPL-UCL/1.0; +https://christiancodes.co.uk)',
+  'User-Agent': 'Mozilla/5.0 (compatible; FPL-UCL/1.0; +https://fpl-ucl.christian-8ee.workers.dev)',
   Accept: 'application/json',
 }
 
