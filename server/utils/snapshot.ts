@@ -152,7 +152,7 @@ export async function buildCompetitionSnapshot() {
 
 export type CompetitionSnapshot = Awaited<ReturnType<typeof buildCompetitionSnapshot>>
 
-const SNAPSHOT_KEY = 'competition:snapshot:v2'
+const SNAPSHOT_KEY = 'competition:snapshot:v3'
 
 let snapshotMemory: Timed<CompetitionSnapshot> | null = null
 let snapshotInflight: Promise<CompetitionSnapshot> | null = null
@@ -187,7 +187,7 @@ export async function getCompetitionSnapshot() {
     snapshotInflight = buildCompetitionSnapshot()
       .then(async (data) => {
         snapshotMemory = { at: Date.now(), data }
-        await writeSharedCache(SNAPSHOT_KEY, data, Math.max(snapshotTtlSeconds(data), 60 * 60))
+        await writeSharedCache(SNAPSHOT_KEY, data, snapshotTtlSeconds(data))
         return data
       })
       .catch((error) => {
@@ -199,6 +199,6 @@ export async function getCompetitionSnapshot() {
       })
   }
 
-  if (cached) return cached.data
+  // Await the rebuild. Workers cancel floating refresh work after the response.
   return snapshotInflight
 }
