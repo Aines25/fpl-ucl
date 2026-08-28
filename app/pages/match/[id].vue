@@ -22,9 +22,14 @@ const { resultById } = useFixtures()
 const result = computed(() => resultById.value.get(fixture.id))
 const differentials = computed(() => compareSquads(homeSquad.value, awaySquad.value))
 
+function fixtureSquadScore(squad: typeof homeSquad.value) {
+  if (!squad?.available || squad.previewFromGameweek) return null
+  return squad.netPoints
+}
+
 const requestUrl = useRequestURL()
-const homeScore = computed(() => result.value?.homeScore ?? homeSquad.value?.netPoints ?? null)
-const awayScore = computed(() => result.value?.awayScore ?? awaySquad.value?.netPoints ?? null)
+const homeScore = computed(() => result.value?.homeScore ?? fixtureSquadScore(homeSquad.value))
+const awayScore = computed(() => result.value?.awayScore ?? fixtureSquadScore(awaySquad.value))
 const scoreLine = computed(() => {
   const left = homeScore.value === null ? '–' : String(homeScore.value)
   const right = awayScore.value === null ? '–' : String(awayScore.value)

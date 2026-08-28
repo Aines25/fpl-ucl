@@ -8,6 +8,7 @@ import {
   formatTeamValue,
   formatTransfers,
   hydrateSquad,
+  previewSquadFromCurrent,
   squadMovesFromTransfers,
   summariseChips,
   freeTransfersRemaining,
@@ -160,6 +161,7 @@ describe('squad helpers', () => {
 
     expect(squad.available).toBe(true)
     expect(squad.formation).toBe('3-4-3')
+    expect(squad.previewFromGameweek).toBeNull()
     expect(squad.points).toBe(64)
     expect(squad.netPoints).toBe(60)
     expect(squad.officialPoints).toBe(72)
@@ -252,6 +254,55 @@ describe('squad helpers', () => {
 
   it('starts with no transfer moves', () => {
     expect(emptySquad(16, 12878, 'Christian Smith-Rose', 1).moves).toEqual([])
+    expect(emptySquad(16, 12878, 'Christian Smith-Rose', 1).previewFromGameweek).toBeNull()
+  })
+
+  it('turns a current squad into an unscored preview for a future gameweek', () => {
+    const current = hydrateSquad({
+      managerId: 16,
+      fplId: 12878,
+      name: 'Christian Smith-Rose',
+      teamName: 'Test FC',
+      gameweek: 3,
+      catalogue,
+      live,
+      payload: {
+        active_chip: '3xc',
+        entry_history: {
+          points: 72,
+          event_transfers: 2,
+          event_transfers_cost: 4,
+          value: 1005,
+          bank: 15,
+        },
+        picks: [
+          { element: 9, position: 1, multiplier: 3, is_captain: true, is_vice_captain: false },
+          { element: 5, position: 2, multiplier: 1, is_captain: false, is_vice_captain: true },
+        ],
+      },
+    })
+    current.moves = [{ inId: 9, outId: 10, inName: 'Haaland', outName: 'Watkins', inCost: 145, outCost: 90 }]
+
+    const preview = previewSquadFromCurrent(current, 5, 3)
+
+    expect(preview.gameweek).toBe(5)
+    expect(preview.previewFromGameweek).toBe(3)
+    expect(preview.available).toBe(true)
+    expect(preview.starters).toHaveLength(2)
+    expect(preview.starters[0]).toMatchObject({
+      webName: 'Haaland',
+      isCaptain: true,
+      points: 0,
+      rawPoints: 0,
+      minutes: 0,
+    })
+    expect(preview.points).toBe(0)
+    expect(preview.netPoints).toBe(0)
+    expect(preview.chip).toBeNull()
+    expect(preview.chipLabel).toBeNull()
+    expect(preview.transfers).toBe(0)
+    expect(preview.moves).toEqual([])
+    expect(preview.teamValue).toBe(1005)
   })
 
   it('maps this gameweek transfers onto catalogue names', () => {

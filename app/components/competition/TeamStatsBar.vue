@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{
 })
 
 const totalPoints = computed(() => {
-  if (!props.squad.available) return '–'
+  if (!props.squad.available || props.squad.previewFromGameweek) return '–'
   if (props.scoring === 'official') {
     return props.squad.officialNetPoints ?? props.squad.netPoints
   }
@@ -54,7 +54,7 @@ const totalPoints = computed(() => {
       <div>
         <dt class="font-stats text-kicker tracking-kicker text-silver uppercase">Transfers</dt>
         <dd class="font-stats text-2xl leading-tight text-white tabular-nums">
-          {{ squad.available ? formatTransfers(squad.transfers, squad.transferCost) : '–' }}
+          {{ squad.available && !squad.previewFromGameweek ? formatTransfers(squad.transfers, squad.transferCost) : '–' }}
         </dd>
       </div>
       <div>

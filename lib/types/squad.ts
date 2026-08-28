@@ -126,4 +126,5 @@ export interface FplSquadView {
   formation: string
   starters: SquadSlot[]
   bench: SquadSlot[]
+  previewFromGameweek: number | null
 }

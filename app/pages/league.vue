@@ -49,6 +49,7 @@ const templateSquad = computed(() => {
     formation: insights.value?.templateFormation ?? '–',
     starters: xi,
     bench: [],
+    previewFromGameweek: null,
   }
 })
 const { squad, loading, error } = useEntrySquad(expandedEntryId, gameweek)

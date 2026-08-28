@@ -16,6 +16,7 @@ function normaliseSquad(data: FplSquadView): FplSquadView {
     moves: data.moves ?? [],
     chipsUsed: data.chipsUsed ?? [],
     chipsRemaining: data.chipsRemaining ?? [],
+    previewFromGameweek: data.previewFromGameweek ?? null,
   }
 }
 

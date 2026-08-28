@@ -75,6 +75,12 @@ const flagged = computed(() => {
         : 'space-y-3'"
     >
       <div class="space-y-3">
+        <p
+          v-if="squad?.previewFromGameweek"
+          class="rounded-md border border-cyan/20 bg-navy-800/80 px-4 py-3 font-stats text-label text-silver"
+        >
+          Showing GW {{ squad.previewFromGameweek }} squad — not locked until the GW {{ squad.gameweek }} deadline.
+        </p>
         <div
           v-if="flagged.length"
           class="rounded-md border border-live/30 bg-live/10 px-4 py-3"

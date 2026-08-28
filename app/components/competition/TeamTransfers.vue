@@ -15,7 +15,10 @@ const moves = computed(() => props.squad.moves ?? [])
       Transfers · GW {{ squad.gameweek }}
     </p>
 
-    <p v-if="!moves.length" class="mt-2 font-stats text-label text-silver">
+    <p v-if="squad.previewFromGameweek" class="mt-2 font-stats text-label text-silver">
+      Transfers for this gameweek aren’t set yet.
+    </p>
+    <p v-else-if="!moves.length" class="mt-2 font-stats text-label text-silver">
       No transfers this gameweek
     </p>
 

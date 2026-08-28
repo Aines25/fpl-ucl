@@ -1,7 +1,7 @@
 import { getPlayer } from '../../data/players'
 import { indexClubFixtures } from '../../lib/engine/club-fixtures'
 import { shouldUseLiveGameweekPoints } from '../../lib/engine/results'
-import { emptySquad, hydrateSquad, squadMovesFromTransfers, summariseChips } from '../../lib/engine/squad'
+import { emptySquad, hydrateSquad, previewSquadFromCurrent, squadMovesFromTransfers, summariseChips } from '../../lib/engine/squad'
 import type { CataloguePlayer, ClubInfo, FplSquadView, LivePlayerStats } from '../../lib/types/squad'
 import { isFresh, type Timed } from './cache'
 import {
@@ -22,7 +22,7 @@ const SQUAD_TTL_MS = 45_000
 interface BootstrapCatalogue {
   players: Map<number, CataloguePlayer>
   teams: Map<number, ClubInfo>
-  events: Array<{ id: number, finished: boolean, dataChecked: boolean }>
+  events: Array<{ id: number, finished: boolean, dataChecked: boolean, isCurrent: boolean }>
 }
 
 let catalogueCache: Timed<BootstrapCatalogue> | null = null
@@ -74,6 +74,7 @@ function catalogueFromBootstrap(payload: FplBootstrapResponse): BootstrapCatalog
       id: event.id,
       finished: event.finished,
       dataChecked: event.data_checked,
+      isCurrent: event.is_current,
     })),
   }
 }
@@ -202,7 +203,7 @@ export async function getSquadByEntry(input: {
     return emptySquad(managerId, 0, name, gameweek)
   }
 
-  const key = `entry:v5:${fplId}:${gameweek}`
+  const key = `entry:v6:${fplId}:${gameweek}`
   const cached = squadCache.get(key)
   if (isFresh(cached, SQUAD_TTL_MS) && cached) return cached.data
 
@@ -217,21 +218,30 @@ export async function getSquadByEntry(input: {
       fplFetch<FplTransferResponse[]>(`/entry/${fplId}/transfers/`).catch(() => []),
       fplFetch<FplHistoryResponse>(`/entry/${fplId}/history/`).catch(() => null),
     ])
-      .then(([catalogue, live, fixtures, payload, manager, transfers, history]) => {
+      .then(async ([catalogue, live, fixtures, payload, manager, transfers, history]) => {
+        const currentGameweek = catalogue.events.find((entry) => entry.isCurrent)?.id
+        let picks = payload
+        let previewFrom: number | null = null
+        if ((!picks?.picks?.length) && currentGameweek && gameweek > currentGameweek) {
+          picks = await fplFetch<FplPicksResponse>(`/entry/${fplId}/event/${currentGameweek}/picks/`).catch(() => null)
+          if (picks?.picks?.length) previewFrom = currentGameweek
+        }
+
         const event = catalogue.events?.find((entry) => entry.id === gameweek)
-        const data = hydrateSquad({
+        let data = hydrateSquad({
           managerId,
           fplId,
           name,
           teamName: manager?.name ?? null,
           gameweek,
-          payload,
+          payload: picks,
           catalogue: catalogue.players,
           live,
           fixtures: indexClubFixtures(fixtures, catalogue.teams),
-          useLivePoints: shouldUseLiveGameweekPoints(event) && live.size > 0,
+          useLivePoints: !previewFrom && shouldUseLiveGameweekPoints(event) && live.size > 0,
         })
-        data.moves = squadMovesFromTransfers(transfers, gameweek, catalogue.players)
+        if (previewFrom) data = previewSquadFromCurrent(data, gameweek, previewFrom)
+        data.moves = previewFrom ? [] : squadMovesFromTransfers(transfers, gameweek, catalogue.players)
         const chips = summariseChips(history?.chips, gameweek)
         data.chipsUsed = chips.chipsUsed
         data.chipsRemaining = chips.chipsRemaining

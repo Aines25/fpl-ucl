@@ -243,6 +243,7 @@ export function emptySquad(
     formation: '–',
     starters: [],
     bench: [],
+    previewFromGameweek: null,
   }
 }
 
@@ -350,6 +351,41 @@ export function hydrateSquad(input: {
     formation: formationFromTypes(starters.map((slot) => slot.elementType)),
     starters,
     bench,
+    previewFromGameweek: null,
+  }
+}
+
+function zeroSlotScoring(slot: SquadSlot): SquadSlot {
+  return {
+    ...slot,
+    rawPoints: 0,
+    points: 0,
+    minutes: 0,
+    breakdown: [],
+  }
+}
+
+export function previewSquadFromCurrent(
+  squad: FplSquadView,
+  requestedGameweek: number,
+  fromGameweek: number,
+): FplSquadView {
+  return {
+    ...squad,
+    gameweek: requestedGameweek,
+    previewFromGameweek: fromGameweek,
+    points: 0,
+    officialPoints: 0,
+    transferCost: 0,
+    netPoints: 0,
+    officialNetPoints: 0,
+    transfers: 0,
+    moves: [],
+    eventRank: null,
+    chip: null,
+    chipLabel: null,
+    starters: squad.starters.map(zeroSlotScoring),
+    bench: squad.bench.map(zeroSlotScoring),
   }
 }
 

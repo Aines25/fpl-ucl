@@ -23,6 +23,6 @@ export default cachedEventHandler(
     maxAge: 45,
     swr: true,
     staleMaxAge: 60 * 10,
-    getKey: (event) => `fpl:entry:v5:${getRouterParam(event, 'entryId')}:${getRouterParam(event, 'gw')}`,
+    getKey: (event) => `fpl:entry:v6:${getRouterParam(event, 'entryId')}:${getRouterParam(event, 'gw')}`,
   },
 )
