@@ -1,6 +1,7 @@
 import { committedFrozenGameweeks } from '~~/data/frozen-scores'
 import { competition, fixtures, groupIds, groups, knockoutTies, matchdays, players } from '~~/data'
 import { getPlayer } from '~~/data/players'
+import { clampTtlToNextDeadline } from '~~/lib/engine/deadline'
 import { goalsFromCountingPicks, resolveKnockoutTie, type KnockoutGoals } from '~~/lib/engine/knockout'
 import { determineFixtureResult } from '~~/lib/engine/results'
 import { standingsForGroup } from '~~/lib/engine/tiebreakers'
@@ -161,7 +162,8 @@ function snapshotTtlSeconds(snapshot?: CompetitionSnapshot) {
   const gameweeks = matchdays
     .map((entry) => entry.fplGameweek)
     .filter((gameweek) => gameweek <= snapshot.currentGameweek)
-  return maxAgeForEvents(snapshot.events, gameweeks)
+  const base = maxAgeForEvents(snapshot.events, gameweeks)
+  return clampTtlToNextDeadline(snapshot.events, snapshot.currentGameweek, base)
 }
 
 export function snapshotCacheControl(event: Parameters<typeof setApiCacheHeaders>[0], snapshot: CompetitionSnapshot) {

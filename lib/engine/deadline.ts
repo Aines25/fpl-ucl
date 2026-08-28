@@ -10,6 +10,26 @@ export function currentLiveEvent(events: FplEventState[]) {
   return events.find((event) => event.isCurrent && !event.finished)
 }
 
+const MIN_CLAMPED_TTL_SECONDS = 60
+
+/**
+ * Cache entries keyed on the current gameweek must not outlive the next
+ * gameweek's deadline: once it passes, "current" changes and long TTLs
+ * (e.g. 12h after data check) would keep serving the previous gameweek.
+ * Returns a short TTL if that deadline has already passed.
+ */
+export function clampTtlToNextDeadline(
+  events: FplEventState[],
+  currentGameweek: number,
+  baseSeconds: number,
+  now = Date.now(),
+) {
+  const next = events.find((event) => event.id === currentGameweek + 1)
+  if (!next?.deadlineTime) return baseSeconds
+  const untilDeadline = Math.ceil((Date.parse(next.deadlineTime) - now) / 1000)
+  return Math.max(MIN_CLAMPED_TTL_SECONDS, Math.min(baseSeconds, untilDeadline))
+}
+
 export function countdownParts(totalMs: number) {
   const clamped = Math.max(0, totalMs)
   const totalSeconds = Math.floor(clamped / 1000)
