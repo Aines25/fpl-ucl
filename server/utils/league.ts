@@ -11,9 +11,11 @@ import { getPlayerCatalogue } from './squad'
 
 const LEAGUE_TTL_MS = 60_000
 const MAX_PAGES = 6
-const CAPTAIN_BATCH = 10
+const CAPTAIN_BATCH = 5
+const CAPTAIN_BATCH_GAP_MS = 200
 const CAPTAIN_PERSIST_SECONDS = 60 * 60 * 12
-const PICKS_CACHE_VERSION = 'v5'
+const PICKS_CACHE_VERSION = 'v6'
+const LEAGUE_CACHE_VERSION = 'v3'
 
 let leagueMemory: Timed<ClassicLeagueTable> | null = null
 let leagueInflight: Promise<ClassicLeagueTable> | null = null
@@ -72,8 +74,8 @@ export function extrasFromPicks(
   }
 }
 
-function extrasAreComplete(extras: LeagueEntryPicks | undefined) {
-  return Boolean(extras && Array.isArray(extras.picks) && typeof extras.transfers === 'number')
+export function extrasAreComplete(extras: LeagueEntryPicks | undefined) {
+  return Boolean(extras && extras.picks.length > 0 && typeof extras.transfers === 'number')
 }
 
 function extrasHaveHistory(extras: LeagueEntryPicks | undefined) {
@@ -102,8 +104,8 @@ export function decorateLeagueExtras(
   }
 }
 
-function leagueCaptainsComplete(standings: LeagueStandingRow[]) {
-  return standings.every((row) => row.entryId <= 0 || (typeof row.transfers === 'number' && 'chip' in row))
+export function leagueCaptainsComplete(standings: LeagueStandingRow[]) {
+  return standings.every((row) => row.entryId <= 0 || typeof row.transfers === 'number')
 }
 
 export function withLeagueRowDefaults(row: LeagueStandingRow): LeagueStandingRow {
@@ -193,19 +195,34 @@ async function fetchEntryExtras(
     needPicks
       ? fplFetch<FplPicksResponse>(`/entry/${entryId}/event/${gameweek}/picks/`).catch(() => null)
       : Promise.resolve(null),
-    fplFetch<FplTransferResponse[]>(`/entry/${entryId}/transfers/`).catch(() => []),
+    existing
+      ? Promise.resolve(null)
+      : fplFetch<FplTransferResponse[]>(`/entry/${entryId}/transfers/`).catch(() => null),
     needHistory
       ? fplFetch<FplHistoryResponse>(`/entry/${entryId}/history/`).catch(() => null)
       : Promise.resolve(null),
   ])
 
+  if (!payload && !existing && !history) return null
+
   let extras = existing ?? extrasFromPicks(payload, names)
-  if (payload) extras = extrasFromPicks(payload, names)
-  const moves = squadMovesFromTransfers(transfers, gameweek, catalogue)
-  extras = {
-    ...extras,
-    transfersIn: moves.map((move) => move.inName),
-    transfersOut: moves.map((move) => move.outName),
+  if (payload) {
+    extras = {
+      ...extrasFromPicks(payload, names),
+      transfersIn: extras.transfersIn,
+      transfersOut: extras.transfersOut,
+      freeTransfers: extras.freeTransfers,
+      chipsUsed: extras.chipsUsed,
+      chipsRemaining: extras.chipsRemaining,
+    }
+  }
+  if (transfers) {
+    const moves = squadMovesFromTransfers(transfers, gameweek, catalogue)
+    extras = {
+      ...extras,
+      transfersIn: moves.map((move) => move.inName),
+      transfersOut: moves.map((move) => move.outName),
+    }
   }
   if (history) {
     return decorateLeagueExtras(extras, gameweek, transfers, history, catalogue)
@@ -231,6 +248,7 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
     })
 
   for (let index = 0; index < toFetch.length; index += CAPTAIN_BATCH) {
+    if (index > 0) await new Promise((resolve) => setTimeout(resolve, CAPTAIN_BATCH_GAP_MS))
     const batch = toFetch.slice(index, index + CAPTAIN_BATCH)
     let fetched = 0
     await Promise.all(batch.map(async (entryId) => {
@@ -245,16 +263,17 @@ async function attachLeagueCaptains(standings: LeagueStandingRow[], event: FplEv
 
   return standings.map((row) => {
     const extras = captainMemory.get(captainKey(row.entryId, gameweek))
+    const picksReady = extrasAreComplete(extras)
     return {
       ...row,
-      captain: extras?.captain ?? null,
-      viceCaptain: extras?.viceCaptain ?? null,
-      transfers: extras?.transfers ?? null,
-      transferCost: extras?.transferCost ?? null,
+      captain: picksReady && extras ? extras.captain : null,
+      viceCaptain: picksReady && extras ? extras.viceCaptain : null,
+      transfers: picksReady && extras ? extras.transfers : null,
+      transferCost: picksReady && extras ? extras.transferCost : null,
       transfersIn: extras?.transfersIn ?? [],
       transfersOut: extras?.transfersOut ?? [],
       freeTransfers: extras?.freeTransfers ?? null,
-      chip: extras?.chip ?? null,
+      chip: picksReady && extras ? extras.chip : null,
       chipsUsed: extras?.chipsUsed ?? [],
       chipsRemaining: extras?.chipsRemaining ?? [],
     }
@@ -315,7 +334,7 @@ export async function getClassicLeague(leagueId = competition.fplLeagueId) {
   }
 
   if (!leagueMemory) {
-    const shared = await readSharedCache<ClassicLeagueTable>(`fpl:league:v2:${leagueId}`)
+    const shared = await readSharedCache<ClassicLeagueTable>(`fpl:league:${LEAGUE_CACHE_VERSION}:${leagueId}`)
     if (shared) {
       leagueMemory = shared
       if (isFresh(shared, LEAGUE_TTL_MS)) return withLeagueTableDefaults(shared.data)
@@ -336,7 +355,7 @@ export async function getClassicLeague(leagueId = competition.fplLeagueId) {
             persistSeconds = 60 * 10
           }
         }
-        await writeSharedCache(`fpl:league:v2:${leagueId}`, data, persistSeconds)
+        await writeSharedCache(`fpl:league:${LEAGUE_CACHE_VERSION}:${leagueId}`, data, persistSeconds)
         return data
       })
       .catch((error) => {

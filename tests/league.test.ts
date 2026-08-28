@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { leagueShareCard, leagueShareDimensions, leagueShareImageParts, leagueShareParts } from '../lib/engine/share-cards'
 import type { LeagueStandingRow } from '../lib/types/league'
-import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasFromPicks, normaliseLeagueStanding, withLeagueRowDefaults } from '../server/utils/league'
+import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasAreComplete, extrasFromPicks, leagueCaptainsComplete, normaliseLeagueStanding, withLeagueRowDefaults } from '../server/utils/league'
 
 describe('normaliseLeagueStanding', () => {
   it('maps FPL standings and flags tournament managers', () => {
@@ -68,20 +68,68 @@ describe('extrasFromPicks', () => {
     expect(extrasFromPicks({
       active_chip: '3xc',
       entry_history: { event_transfers: 0 },
-      picks: [],
-    }, new Map())).toEqual({
-      captain: null,
+      picks: [
+        { element: 1, position: 1, multiplier: 3, is_captain: true, is_vice_captain: false },
+      ],
+    }, new Map([[1, 'Haaland']]))).toEqual({
+      captain: 'Haaland',
       viceCaptain: null,
       transfers: 0,
       transferCost: 0,
       chip: '3xc',
-      picks: [],
+      picks: [
+        { element: 1, position: 1, multiplier: 3, isCaptain: true, isViceCaptain: false },
+      ],
       transfersIn: [],
       transfersOut: [],
       freeTransfers: null,
       chipsUsed: [],
       chipsRemaining: [],
     })
+  })
+})
+
+describe('extrasAreComplete', () => {
+  it('rejects a failed picks payload so it can be retried', () => {
+    expect(extrasAreComplete(extrasFromPicks(null, new Map()))).toBe(false)
+    expect(extrasAreComplete(undefined)).toBe(false)
+  })
+
+  it('accepts extras that include this gameweek’s squad', () => {
+    expect(extrasAreComplete(extrasFromPicks({
+      entry_history: { event_transfers: 0 },
+      picks: [
+        { element: 1, position: 1, multiplier: 2, is_captain: true, is_vice_captain: false },
+      ],
+    }, new Map([[1, 'Haaland']])))).toBe(true)
+  })
+})
+
+describe('leagueCaptainsComplete', () => {
+  it('is incomplete until every manager has fetched transfers', () => {
+    const row = {
+      rank: 1,
+      lastRank: null,
+      entryId: 1,
+      playerName: 'Manager',
+      entryName: 'Team',
+      eventTotal: 50,
+      total: 50,
+      competitionPlayerId: null,
+      captain: null,
+      viceCaptain: null,
+      transfers: null,
+      transferCost: null,
+      transfersIn: [],
+      transfersOut: [],
+      freeTransfers: null,
+      chip: null,
+      chipsUsed: [],
+      chipsRemaining: [],
+    }
+
+    expect(leagueCaptainsComplete([row])).toBe(false)
+    expect(leagueCaptainsComplete([{ ...row, transfers: 0 }])).toBe(true)
   })
 })
 

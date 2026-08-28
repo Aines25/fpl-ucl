@@ -57,6 +57,12 @@ const stillInUcl = computed(() => {
   return activeCompetitionIds(snapshot.value.standings, snapshot.value.knockout ?? [])
 })
 const leagueImageParts = leagueShareImageParts()
+const captainsIncomplete = computed(() =>
+  (league.value?.standings ?? []).some((row) => row.entryId > 0 && row.transfers == null),
+)
+const chipsIncomplete = computed(() =>
+  (league.value?.standings ?? []).some((row) => row.entryId > 0 && row.freeTransfers == null),
+)
 
 useHead({
   title: 'League · Champions League',
@@ -149,6 +155,9 @@ watch(tab, () => {
       </p>
 
       <TabsContent value="official">
+        <p v-if="captainsIncomplete" class="mb-4 text-sm text-silver">
+          Still fetching a few squads. Captains and chips will fill in as those picks arrive.
+        </p>
         <LeagueStandingsTable
           :standings="league?.standings ?? []"
           :still-in-ucl="stillInUcl"
@@ -310,7 +319,10 @@ watch(tab, () => {
       </TabsContent>
 
       <TabsContent value="chips">
-        <p class="mb-4 text-sm text-silver">
+        <p v-if="chipsIncomplete" class="mb-4 text-sm text-silver">
+          Still fetching chip history for some managers.
+        </p>
+        <p v-else class="mb-4 text-sm text-silver">
           Every mini-league manager. Gold rows are still in the Champions League.
         </p>
         <ChipBoard

@@ -51,8 +51,9 @@ function mobileCol(view: LeagueMobileColumns) {
   return mobileColumns.value === view ? '' : 'hidden sm:table-cell'
 }
 
-function rowChip(chip: string | null) {
-  return chipLabel(chip) ?? 'No chip used'
+function rowChip(row: LeagueStandingRow) {
+  if (row.transfers == null) return '–'
+  return chipLabel(row.chip) ?? 'No chip used'
 }
 </script>
 
@@ -135,7 +136,7 @@ function rowChip(chip: string | null) {
                   />
                 </span>
                 <p class="text-[11px] leading-tight font-normal text-silver-dim">
-                  {{ rowChip(row.chip) }}
+                  {{ rowChip(row) }}
                 </p>
               </TableCell>
               <TableCell :class="['whitespace-normal text-white', mobileCol('picks')]">
