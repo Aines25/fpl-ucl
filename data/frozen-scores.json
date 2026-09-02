@@ -323,5 +323,330 @@
         "frozen": true
       }
     ]
+  },
+  "2": {
+    "frozenAt": "2026-09-02T08:10:59.629Z",
+    "scores": [
+      {
+        "managerId": 1,
+        "fplId": 563186,
+        "gameweek": 2,
+        "points": 119,
+        "transferCost": 0,
+        "netPoints": 119,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 2,
+        "fplId": 1188468,
+        "gameweek": 2,
+        "points": 103,
+        "transferCost": 0,
+        "netPoints": 103,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 3,
+        "fplId": 144956,
+        "gameweek": 2,
+        "points": 110,
+        "transferCost": 0,
+        "netPoints": 110,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 4,
+        "fplId": 1312346,
+        "gameweek": 2,
+        "points": 98,
+        "transferCost": 0,
+        "netPoints": 98,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 5,
+        "fplId": 651337,
+        "gameweek": 2,
+        "points": 103,
+        "transferCost": 0,
+        "netPoints": 103,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 6,
+        "fplId": 4946618,
+        "gameweek": 2,
+        "points": 115,
+        "transferCost": 0,
+        "netPoints": 115,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 7,
+        "fplId": 1347929,
+        "gameweek": 2,
+        "points": 108,
+        "transferCost": 0,
+        "netPoints": 108,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 8,
+        "fplId": 1126782,
+        "gameweek": 2,
+        "points": 83,
+        "transferCost": 4,
+        "netPoints": 79,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 9,
+        "fplId": 1068551,
+        "gameweek": 2,
+        "points": 86,
+        "transferCost": 0,
+        "netPoints": 86,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 10,
+        "fplId": 328296,
+        "gameweek": 2,
+        "points": 117,
+        "transferCost": 0,
+        "netPoints": 117,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 11,
+        "fplId": 66841,
+        "gameweek": 2,
+        "points": 76,
+        "transferCost": 0,
+        "netPoints": 76,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 12,
+        "fplId": 388304,
+        "gameweek": 2,
+        "points": 98,
+        "transferCost": 0,
+        "netPoints": 98,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 13,
+        "fplId": 1472950,
+        "gameweek": 2,
+        "points": 112,
+        "transferCost": 0,
+        "netPoints": 112,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 14,
+        "fplId": 142150,
+        "gameweek": 2,
+        "points": 105,
+        "transferCost": 0,
+        "netPoints": 105,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 15,
+        "fplId": 24746,
+        "gameweek": 2,
+        "points": 92,
+        "transferCost": 0,
+        "netPoints": 92,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 16,
+        "fplId": 12878,
+        "gameweek": 2,
+        "points": 115,
+        "transferCost": 0,
+        "netPoints": 115,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 17,
+        "fplId": 2754371,
+        "gameweek": 2,
+        "points": 120,
+        "transferCost": 0,
+        "netPoints": 120,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 18,
+        "fplId": 2722562,
+        "gameweek": 2,
+        "points": 122,
+        "transferCost": 0,
+        "netPoints": 122,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 19,
+        "fplId": 559784,
+        "gameweek": 2,
+        "points": 97,
+        "transferCost": 0,
+        "netPoints": 97,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 20,
+        "fplId": 2634981,
+        "gameweek": 2,
+        "points": 107,
+        "transferCost": 0,
+        "netPoints": 107,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 21,
+        "fplId": 58801,
+        "gameweek": 2,
+        "points": 106,
+        "transferCost": 0,
+        "netPoints": 106,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 22,
+        "fplId": 608091,
+        "gameweek": 2,
+        "points": 86,
+        "transferCost": 0,
+        "netPoints": 86,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 23,
+        "fplId": 1532295,
+        "gameweek": 2,
+        "points": 112,
+        "transferCost": 0,
+        "netPoints": 112,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 24,
+        "fplId": 1267335,
+        "gameweek": 2,
+        "points": 67,
+        "transferCost": 0,
+        "netPoints": 67,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 25,
+        "fplId": 233847,
+        "gameweek": 2,
+        "points": 114,
+        "transferCost": 0,
+        "netPoints": 114,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 26,
+        "fplId": 278195,
+        "gameweek": 2,
+        "points": 100,
+        "transferCost": 0,
+        "netPoints": 100,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 27,
+        "fplId": 1987263,
+        "gameweek": 2,
+        "points": 94,
+        "transferCost": 0,
+        "netPoints": 94,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 28,
+        "fplId": 86054,
+        "gameweek": 2,
+        "points": 100,
+        "transferCost": 0,
+        "netPoints": 100,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 29,
+        "fplId": 4191804,
+        "gameweek": 2,
+        "points": 100,
+        "transferCost": 0,
+        "netPoints": 100,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 30,
+        "fplId": 505660,
+        "gameweek": 2,
+        "points": 94,
+        "transferCost": 0,
+        "netPoints": 94,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 31,
+        "fplId": 2412253,
+        "gameweek": 2,
+        "points": 59,
+        "transferCost": 4,
+        "netPoints": 55,
+        "available": true,
+        "frozen": true
+      },
+      {
+        "managerId": 32,
+        "fplId": 2737591,
+        "gameweek": 2,
+        "points": 113,
+        "transferCost": 0,
+        "netPoints": 113,
+        "available": true,
+        "frozen": true
+      }
+    ]
   }
 }
