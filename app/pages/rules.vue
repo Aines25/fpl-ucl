@@ -40,9 +40,9 @@ import { matchdays } from '../../data/matchdays'
       <h3 class="font-display text-white uppercase tracking-display">Group tie-breakers</h3>
       <ol class="list-decimal space-y-1 pl-5">
         <li>Competition points</li>
+        <li>Overall PF difference</li>
         <li>Head-to-head points among the tied managers</li>
         <li>Head-to-head PF difference among the tied managers</li>
-        <li>Overall PF difference</li>
         <li>Overall PF</li>
         <li>Alphabetical name</li>
       </ol>

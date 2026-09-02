@@ -65,7 +65,7 @@ describe('standingsForGroup', () => {
     expect(rows[0].qualifyingZone).toBe(true)
   })
 
-  it('breaks equal points using head-to-head before overall PF', () => {
+  it('breaks equal points using overall difference before head-to-head', () => {
     const rows = standingsForGroup(
       [1, 2, 3, 4],
       fixtures,
@@ -83,7 +83,29 @@ describe('standingsForGroup', () => {
     const dave = rows.find((row) => row.playerId === 2)!
     expect(christian.points).toBe(3)
     expect(dave.points).toBe(3)
-    expect(dave.pointsFor).toBeGreaterThan(christian.pointsFor)
+    expect(dave.difference).toBeGreaterThan(christian.difference)
+    expect(dave.position).toBeLessThan(christian.position)
+  })
+
+  it('uses head-to-head when points and overall difference are level', () => {
+    const rows = standingsForGroup(
+      [1, 2, 3, 4],
+      fixtures,
+      [
+        result('1', 70, 60, 1, 2),
+        result('2', 50, 50, 3, 4),
+        result('3', 40, 50, 1, 3),
+        result('4', 40, 50, 4, 2),
+      ],
+      players,
+      2,
+    )
+
+    const christian = rows.find((row) => row.playerId === 1)!
+    const dave = rows.find((row) => row.playerId === 2)!
+    expect(christian.points).toBe(3)
+    expect(dave.points).toBe(3)
+    expect(christian.difference).toBe(dave.difference)
     expect(christian.position).toBeLessThan(dave.position)
   })
 })

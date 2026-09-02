@@ -67,8 +67,8 @@ describe('scenariosForGroup', () => {
       [1, 2, 3, 4],
       fixtures,
       [
-        result('1', 80, 40, 1, 2),
-        result('2', 40, 80, 3, 4),
+        result('1', 51, 50, 1, 2),
+        result('2', 50, 51, 3, 4),
       ],
       players,
     )

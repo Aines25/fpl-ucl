@@ -53,12 +53,13 @@ function compareTiedPlayers(
   results: FixtureResult[],
   players: CompetitionPlayer[],
 ) {
+  if (left.difference !== right.difference) return right.difference - left.difference
+
   const leftH2h = headToHeadRecord(left.playerId, tiedIds, fixtures, results)
   const rightH2h = headToHeadRecord(right.playerId, tiedIds, fixtures, results)
 
   if (leftH2h.points !== rightH2h.points) return rightH2h.points - leftH2h.points
   if (leftH2h.difference !== rightH2h.difference) return rightH2h.difference - leftH2h.difference
-  if (left.difference !== right.difference) return right.difference - left.difference
   if (left.pointsFor !== right.pointsFor) return right.pointsFor - left.pointsFor
 
   const leftName = players.find((player) => player.id === left.playerId)?.name ?? ''
