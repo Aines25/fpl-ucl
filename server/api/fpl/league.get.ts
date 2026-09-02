@@ -1,17 +1,16 @@
 import { setApiCacheHeaders } from '../../utils/fpl'
-import { getClassicLeague } from '../../utils/league'
-import { getBootstrap, maxAgeForEvents } from '../../utils/scores'
+import { getClassicLeague, leagueCaptainsComplete, officialLeagueTtlSeconds } from '../../utils/league'
+import { getBootstrap } from '../../utils/scores'
 
 export default defineEventHandler(async (event) => {
   const table = await getClassicLeague()
-  let maxAge = 60
+  let maxAge = officialLeagueTtlSeconds(undefined, leagueCaptainsComplete(table.standings))
   try {
     const bootstrap = await getBootstrap()
-    const gameweek = bootstrap.current?.id ?? 1
-    maxAge = maxAgeForEvents(bootstrap.events, [gameweek])
+    maxAge = officialLeagueTtlSeconds(bootstrap.current, leagueCaptainsComplete(table.standings))
   }
   catch {
-    maxAge = 60
+    maxAge = officialLeagueTtlSeconds(undefined, leagueCaptainsComplete(table.standings))
   }
   setApiCacheHeaders(event, maxAge)
   return table

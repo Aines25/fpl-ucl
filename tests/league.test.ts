@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { leagueShareCard, leagueShareDimensions, leagueShareImageParts, leagueShareParts } from '../lib/engine/share-cards'
 import type { LeagueStandingRow } from '../lib/types/league'
-import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasAreComplete, extrasFromPicks, leagueCaptainsComplete, normaliseLeagueStanding, withLeagueRowDefaults } from '../server/utils/league'
+import { captainsAreLocked, captainsFromPicks, decorateLeagueExtras, extrasAreComplete, extrasFromPicks, leagueCaptainsComplete, normaliseLeagueStanding, officialLeagueCacheIsFresh, officialLeagueTtlSeconds, withLeagueRowDefaults } from '../server/utils/league'
 
 describe('normaliseLeagueStanding', () => {
   it('maps FPL standings and flags tournament managers', () => {
@@ -149,6 +149,84 @@ describe('captainsFromPicks', () => {
       captain: null,
       viceCaptain: null,
     })
+  })
+})
+
+describe('officialLeagueTtlSeconds', () => {
+  const liveEvent = {
+    id: 3,
+    name: 'Gameweek 3',
+    isCurrent: true,
+    isNext: false,
+    finished: false,
+    dataChecked: false,
+    deadlineTime: '2026-08-01T11:00:00Z',
+  }
+  const confirmedEvent = { ...liveEvent, dataChecked: true, finished: true }
+
+  it('keeps a short ttl only while locked extras are still filling', () => {
+    expect(officialLeagueTtlSeconds(liveEvent, false)).toBe(60)
+    expect(officialLeagueTtlSeconds(liveEvent, true)).toBe(60 * 10)
+  })
+
+  it('holds the confirmed FPL table overnight', () => {
+    expect(officialLeagueTtlSeconds(confirmedEvent, true)).toBe(60 * 60 * 12)
+  })
+})
+
+describe('officialLeagueCacheIsFresh', () => {
+  const liveEvent = {
+    id: 3,
+    name: 'Gameweek 3',
+    isCurrent: true,
+    isNext: false,
+    finished: false,
+    dataChecked: false,
+    deadlineTime: '2026-08-01T11:00:00Z',
+  }
+
+  function cachedTable(overrides: { gameweek?: number, dataChecked?: boolean, transfers?: number | null } = {}) {
+    return {
+      at: Date.now() - 1_000,
+      data: {
+        leagueId: 1,
+        name: 'Classic league',
+        gameweek: overrides.gameweek ?? 3,
+        dataChecked: overrides.dataChecked ?? false,
+        standings: [{
+          rank: 1,
+          lastRank: null,
+          entryId: 1,
+          playerName: 'Manager',
+          entryName: 'Team',
+          eventTotal: 0,
+          total: 0,
+          competitionPlayerId: null,
+          captain: null,
+          viceCaptain: null,
+          transfers: overrides.transfers === undefined ? 0 : overrides.transfers,
+          transferCost: 0,
+          transfersIn: [],
+          transfersOut: [],
+          freeTransfers: 1,
+          chip: null,
+          chipsUsed: [],
+          chipsRemaining: [],
+        }],
+      },
+    }
+  }
+
+  it('is stale when FPL has now confirmed the gameweek', () => {
+    expect(officialLeagueCacheIsFresh(cachedTable(), { ...liveEvent, dataChecked: true })).toBe(false)
+  })
+
+  it('is stale when the cached snapshot is for a previous gameweek', () => {
+    expect(officialLeagueCacheIsFresh(cachedTable({ gameweek: 2 }), liveEvent)).toBe(false)
+  })
+
+  it('is fresh for a complete post-deadline snapshot', () => {
+    expect(officialLeagueCacheIsFresh(cachedTable(), liveEvent)).toBe(true)
   })
 })
 

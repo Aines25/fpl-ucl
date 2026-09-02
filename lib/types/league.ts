@@ -22,6 +22,9 @@ export interface LeagueStandingRow {
 export interface ClassicLeagueTable {
   leagueId: number
   name: string
+  gameweek?: number
+  dataChecked?: boolean
+  picksComplete?: boolean
   standings: LeagueStandingRow[]
 }
 

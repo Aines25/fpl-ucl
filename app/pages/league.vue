@@ -3,11 +3,11 @@ import { activeCompetitionIds } from '../../lib/engine/qualification'
 import { leagueShareImageParts } from '../../lib/engine/share-cards'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const { league, status } = useLeague()
-const { snapshot, isLive } = useCompetition()
+const { league, status, error: leagueError } = useLeague()
+const { snapshot } = useCompetition()
 
 const tab = ref<'official' | 'live' | 'ownership' | 'prices' | 'chips'>('official')
-const { live, feed, status: liveStatus } = useLiveLeague(computed(() => tab.value === 'live' || isLive.value))
+const { live, feed, status: liveStatus } = useLiveLeague(computed(() => tab.value === 'live'))
 const insightsOn = computed(() => tab.value === 'ownership' || tab.value === 'prices')
 const requestUrl = useRequestURL()
 
@@ -156,7 +156,10 @@ watch(tab, () => {
       </p>
 
       <TabsContent value="official">
-        <p v-if="captainsIncomplete" class="mb-4 text-sm text-silver">
+        <p v-if="leagueError && !league" class="mb-4 text-sm text-live">
+          Could not load the official table. Try again in a moment.
+        </p>
+        <p v-else-if="captainsIncomplete" class="mb-4 text-sm text-silver">
           Still fetching a few squads. Captains and chips will fill in as those picks arrive.
         </p>
         <LeagueStandingsTable
