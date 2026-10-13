@@ -3,9 +3,12 @@ import { Check, Copy } from '@lucide/vue'
 import { fixtures, matchdays } from '../../../data'
 import { getPlayer } from '../../../data/players'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   matchday?: number
-}>()
+  shares?: 'all' | 'tables' | 'matchday'
+}>(), {
+  shares: 'all',
+})
 
 const { snapshot } = useCompetition()
 const { resultById } = useFixtures()
@@ -54,11 +57,13 @@ async function copyDigest() {
 <template>
   <div class="flex flex-wrap justify-end gap-2">
     <ShareImageButton
+      v-if="shares === 'all' || shares === 'matchday'"
       :href="`/api/og/matchday/${matchday}?size=square`"
       :filename="`matchday-${matchday}.png`"
       label="Matchday image"
     />
     <ShareImageButton
+      v-if="shares === 'all' || shares === 'tables'"
       :href="`/api/og/groups?md=${matchday}&size=square`"
       :filename="`groups-md${matchday}.png`"
       label="Tables image"
