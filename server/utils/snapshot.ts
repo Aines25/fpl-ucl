@@ -152,7 +152,7 @@ export async function buildCompetitionSnapshot() {
 
 export type CompetitionSnapshot = Awaited<ReturnType<typeof buildCompetitionSnapshot>>
 
-const SNAPSHOT_KEY = 'competition:snapshot:v7'
+const SNAPSHOT_KEY = 'competition:snapshot:v8'
 
 let snapshotMemory: Timed<CompetitionSnapshot> | null = null
 let snapshotInflight: Promise<CompetitionSnapshot> | null = null
