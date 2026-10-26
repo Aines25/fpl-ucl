@@ -11,14 +11,19 @@ const props = defineProps<{
 }>()
 
 function side(id: number | null, seed: 1 | 2) {
+  const seeded = props.tie.stage === 'round-of-16'
   if (!id) {
-    return { name: 'TBD', mark: '–', role: seed === 1 ? 'Group winner' : 'Runner-up' }
+    return {
+      name: 'TBD',
+      mark: '–',
+      role: seeded ? (seed === 1 ? 'Group winner' : 'Runner-up') : null,
+    }
   }
   const player = getPlayer(id)
   return {
     name: player.name,
-    mark: `${player.group}${seed}`,
-    role: seed === 1 ? 'Group winner' : 'Runner-up',
+    mark: seeded ? `${player.group}${seed}` : player.group,
+    role: seeded ? (seed === 1 ? 'Group winner' : 'Runner-up') : null,
   }
 }
 
@@ -61,7 +66,7 @@ const legs = computed(() => {
               {{ playerOne.name }}
             </p>
             <p class="font-stats text-kicker tracking-kicker text-silver uppercase">
-              {{ playerOne.mark }} · {{ playerOne.role }}
+              {{ playerOne.role ? `${playerOne.mark} · ${playerOne.role}` : `Group ${playerOne.mark}` }}
             </p>
           </div>
           <ScoreDisplay
@@ -75,7 +80,7 @@ const legs = computed(() => {
               {{ playerTwo.name }}
             </p>
             <p class="font-stats text-kicker tracking-kicker text-silver uppercase">
-              {{ playerTwo.mark }} · {{ playerTwo.role }}
+              {{ playerTwo.role ? `${playerTwo.mark} · ${playerTwo.role}` : `Group ${playerTwo.mark}` }}
             </p>
           </div>
           <ScoreDisplay

@@ -2,6 +2,7 @@ import type { KnockoutTieConfig, TournamentFixture } from '../lib/types/competit
 
 /**
  * Round of 16 was drawn once after gameweek 6 and committed here.
+ * Quarter-finals were drawn once after gameweek 8 and committed here.
  * Later rounds stay empty until their draws are run the same way.
  * Runtime code must never call Math.random() to fill these.
  */
@@ -150,6 +151,78 @@ export const knockoutFixtures: TournamentFixture[] = [
     awayId: 5,
     leg: 2,
   },
+  {
+    id: 'QF-1-L1',
+    stage: 'quarter-final',
+    matchday: 9,
+    fplGameweek: 9,
+    homeId: 15,
+    awayId: 17,
+    leg: 1,
+  },
+  {
+    id: 'QF-1-L2',
+    stage: 'quarter-final',
+    matchday: 10,
+    fplGameweek: 10,
+    homeId: 17,
+    awayId: 15,
+    leg: 2,
+  },
+  {
+    id: 'QF-2-L1',
+    stage: 'quarter-final',
+    matchday: 9,
+    fplGameweek: 9,
+    homeId: 2,
+    awayId: 25,
+    leg: 1,
+  },
+  {
+    id: 'QF-2-L2',
+    stage: 'quarter-final',
+    matchday: 10,
+    fplGameweek: 10,
+    homeId: 25,
+    awayId: 2,
+    leg: 2,
+  },
+  {
+    id: 'QF-3-L1',
+    stage: 'quarter-final',
+    matchday: 9,
+    fplGameweek: 9,
+    homeId: 24,
+    awayId: 16,
+    leg: 1,
+  },
+  {
+    id: 'QF-3-L2',
+    stage: 'quarter-final',
+    matchday: 10,
+    fplGameweek: 10,
+    homeId: 16,
+    awayId: 24,
+    leg: 2,
+  },
+  {
+    id: 'QF-4-L1',
+    stage: 'quarter-final',
+    matchday: 9,
+    fplGameweek: 9,
+    homeId: 22,
+    awayId: 5,
+    leg: 1,
+  },
+  {
+    id: 'QF-4-L2',
+    stage: 'quarter-final',
+    matchday: 10,
+    fplGameweek: 10,
+    homeId: 5,
+    awayId: 22,
+    leg: 2,
+  },
 ]
 
 export const knockoutTies: KnockoutTieConfig[] = [
@@ -217,14 +290,38 @@ export const knockoutTies: KnockoutTieConfig[] = [
     firstLegFixtureId: 'R16-8-L1',
     secondLegFixtureId: 'R16-8-L2',
   },
-  ...Array.from({ length: 4 }, (_, index) => ({
-    id: `QF-${index + 1}`,
-    stage: 'quarter-final' as const,
-    playerOneId: null,
-    playerTwoId: null,
-    firstLegFixtureId: `QF-${index + 1}-L1`,
-    secondLegFixtureId: `QF-${index + 1}-L2`,
-  })),
+  {
+    id: 'QF-1',
+    stage: 'quarter-final',
+    playerOneId: 15,
+    playerTwoId: 17,
+    firstLegFixtureId: 'QF-1-L1',
+    secondLegFixtureId: 'QF-1-L2',
+  },
+  {
+    id: 'QF-2',
+    stage: 'quarter-final',
+    playerOneId: 2,
+    playerTwoId: 25,
+    firstLegFixtureId: 'QF-2-L1',
+    secondLegFixtureId: 'QF-2-L2',
+  },
+  {
+    id: 'QF-3',
+    stage: 'quarter-final',
+    playerOneId: 24,
+    playerTwoId: 16,
+    firstLegFixtureId: 'QF-3-L1',
+    secondLegFixtureId: 'QF-3-L2',
+  },
+  {
+    id: 'QF-4',
+    stage: 'quarter-final',
+    playerOneId: 22,
+    playerTwoId: 5,
+    firstLegFixtureId: 'QF-4-L1',
+    secondLegFixtureId: 'QF-4-L2',
+  },
   ...Array.from({ length: 2 }, (_, index) => ({
     id: `SF-${index + 1}`,
     stage: 'semi-final' as const,
