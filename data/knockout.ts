@@ -3,7 +3,8 @@ import type { KnockoutTieConfig, TournamentFixture } from '../lib/types/competit
 /**
  * Round of 16 was drawn once after gameweek 6 and committed here.
  * Quarter-finals were drawn once after gameweek 8 and committed here.
- * Later rounds stay empty until their draws are run the same way.
+ * Semi-finals were drawn once after gameweek 10 and committed here.
+ * The final stays empty until its draw is run the same way.
  * Runtime code must never call Math.random() to fill these.
  */
 export const knockoutFixtures: TournamentFixture[] = [
@@ -223,6 +224,42 @@ export const knockoutFixtures: TournamentFixture[] = [
     awayId: 22,
     leg: 2,
   },
+  {
+    id: 'SF-1-L1',
+    stage: 'semi-final',
+    matchday: 11,
+    fplGameweek: 11,
+    homeId: 2,
+    awayId: 22,
+    leg: 1,
+  },
+  {
+    id: 'SF-1-L2',
+    stage: 'semi-final',
+    matchday: 12,
+    fplGameweek: 12,
+    homeId: 22,
+    awayId: 2,
+    leg: 2,
+  },
+  {
+    id: 'SF-2-L1',
+    stage: 'semi-final',
+    matchday: 11,
+    fplGameweek: 11,
+    homeId: 24,
+    awayId: 17,
+    leg: 1,
+  },
+  {
+    id: 'SF-2-L2',
+    stage: 'semi-final',
+    matchday: 12,
+    fplGameweek: 12,
+    homeId: 17,
+    awayId: 24,
+    leg: 2,
+  },
 ]
 
 export const knockoutTies: KnockoutTieConfig[] = [
@@ -322,14 +359,22 @@ export const knockoutTies: KnockoutTieConfig[] = [
     firstLegFixtureId: 'QF-4-L1',
     secondLegFixtureId: 'QF-4-L2',
   },
-  ...Array.from({ length: 2 }, (_, index) => ({
-    id: `SF-${index + 1}`,
-    stage: 'semi-final' as const,
-    playerOneId: null,
-    playerTwoId: null,
-    firstLegFixtureId: `SF-${index + 1}-L1`,
-    secondLegFixtureId: `SF-${index + 1}-L2`,
-  })),
+  {
+    id: 'SF-1',
+    stage: 'semi-final',
+    playerOneId: 2,
+    playerTwoId: 22,
+    firstLegFixtureId: 'SF-1-L1',
+    secondLegFixtureId: 'SF-1-L2',
+  },
+  {
+    id: 'SF-2',
+    stage: 'semi-final',
+    playerOneId: 24,
+    playerTwoId: 17,
+    firstLegFixtureId: 'SF-2-L1',
+    secondLegFixtureId: 'SF-2-L2',
+  },
   {
     id: 'F-1',
     stage: 'final',
